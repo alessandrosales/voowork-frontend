@@ -1,6 +1,7 @@
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -14,14 +15,21 @@ interface NavItem {
 }
 
 export function NavMain({
+  title,
   items,
 }: {
+  title?: string
   items: NavItem[]
 }) {
   const location = useLocation()
 
   return (
     <SidebarGroup>
+      {title ? (
+        <SidebarGroupLabel className="px-2 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          {title}
+        </SidebarGroupLabel>
+      ) : null}
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {

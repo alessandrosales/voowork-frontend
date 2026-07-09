@@ -12,8 +12,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "~/components/ui/sidebar"
-import { UsersIcon, TruckIcon, PackageIcon, Sprout, ListIcon, UserCogIcon, BotIcon, LayoutDashboardIcon } from "lucide-react"
+import { UsersIcon, TruckIcon, PackageIcon, Sprout, ListIcon, UserCogIcon, BotIcon, LayoutDashboardIcon, FileTextIcon } from "lucide-react"
 import { Link } from "react-router"
 
 const data = {
@@ -21,10 +22,22 @@ const data = {
     name: "shadcn",
     email: "m@example.com",
   },
-  navMain: [
+  navPrimary: [
+    {
+      title: "Notas Fiscais",
+      url: "/",
+      icon: <FileTextIcon />,
+    },
+    {
+      title: "Usuários",
+      url: "/usuarios",
+      icon: <UserCogIcon />,
+    },
+  ],
+  navSecondary: [
     {
       title: "Dashboard",
-      url: "/",
+      url: "/dashboard",
       icon: <LayoutDashboardIcon />,
     },
     {
@@ -53,11 +66,6 @@ const data = {
       icon: <ListIcon />,
     },
     {
-      title: "Usuários",
-      url: "/usuarios",
-      icon: <UserCogIcon />,
-    },
-    {
       title: "Agentes",
       url: "/agentes",
       icon: <BotIcon />,
@@ -83,7 +91,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain title="Menu Principal" items={data.navPrimary} />
+        <SidebarSeparator />
+        <NavMain title="Em Breve" items={data.navSecondary} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
