@@ -1,0 +1,14 @@
+[
+  { "id": 1, "nome": "Medicamentos", "descricao": "Todos os tipos de medicamentos controlados e sem controle", "status": "Ativo", "dataCriacao": "2024-01-15" },
+  { "id": 2, "nome": "Cosméticos", "descricao": "Produtos de beleza e cuidados pessoais", "status": "Ativo", "dataCriacao": "2024-02-20" },
+  { "id": 3, "nome": "Suplementos", "descricao": "Vitaminas, minerais e suplementos alimentares", "status": "Ativo", "dataCriacao": "2024-03-10" },
+  { "id": 4, "nome": "Higiene Pessoal", "descricao": "Produtos de higiene e limpeza pessoal", "status": "Inativo", "dataCriacao": "2024-04-05" },
+  { "id": 5, "nome": "Infantil", "descricao": "Produtos para cuidados com bebês e crianças", "status": "Ativo", "dataCriacao": "2024-05-12" },
+  { "id": 6, "nome": "Dermocosméticos", "descricao": "Produtos dermatológicos e de cuidados com a pele", "status": "Ativo", "dataCriacao": "2024-06-01" },
+  { "id": 7, "nome": "Equipamentos", "descricao": "Equipamentos médicos e de primeiros socorros", "status": "Ativo", "dataCriacao": "2024-06-18" },
+  { "id": 8, "nome": "Homeopatia", "descricao": "Medicamentos homeopáticos e fitoterápicos", "status": "Inativo", "dataCriacao": "2024-07-22" },
+  { "id": 9, "nome": "Genéricos", "descricao": "Medicamentos genéricos de diversas classes", "status": "Ativo", "dataCriacao": "2024-08-30" },
+  { "id": 10, "nome": "Éticos", "descricao": "Medicamentos de referência e éticos", "status": "Ativo", "dataCriacao": "2024-09-15" },
+  { "id": 11, "nome": "Similar", "descricao": "Medicamentos similares com registro sanitário", "status": "Ativo", "dataCriacao": "2024-10-01" },
+  { "id": 12, "nome": "Perfumaria", "descricao": "Perfumes e fragrâncias importados e nacionais", "status": "Inativo", "dataCriacao": "2024-10-20" }
+]

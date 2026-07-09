@@ -1,0 +1,14 @@
+[
+  { "id": 1, "nome": "Dipirona Sódica 500mg", "descricao": "Analgésico e antitérmico, caixa com 20 comprimidos", "categoria": "Medicamentos", "valor": 12.5, "status": "Ativo", "dataCriacao": "2024-01-10" },
+  { "id": 2, "nome": "Shampoo Anticaspa", "descricao": "Shampoo dermatológico para tratamento de caspa", "categoria": "Cosméticos", "valor": 28.9, "status": "Ativo", "dataCriacao": "2024-01-15" },
+  { "id": 3, "nome": "Vitamina C 1000mg", "descricao": "Suplemento de vitamina C com 60 cápsulas", "categoria": "Suplementos", "valor": 45.0, "status": "Ativo", "dataCriacao": "2024-02-01" },
+  { "id": 4, "nome": "Sabonete Íntimo", "descricao": "Sabonete para higiene íntima, pH balanceado", "categoria": "Higiene Pessoal", "valor": 15.75, "status": "Inativo", "dataCriacao": "2024-02-10" },
+  { "id": 5, "nome": "Fralda Pampers P", "descricao": "Fralda descartável tamanho P, pacote com 50 unidades", "categoria": "Infantil", "valor": 89.9, "status": "Ativo", "dataCriacao": "2024-02-20" },
+  { "id": 6, "nome": "Protetor Solar FPS 50", "descricao": "Protetor solar facial com toque seco", "categoria": "Dermocosméticos", "valor": 62.5, "status": "Ativo", "dataCriacao": "2024-03-05" },
+  { "id": 7, "nome": "Termômetro Digital", "descricao": "Termômetro digital infravermelho para testa", "categoria": "Equipamentos", "valor": 120.0, "status": "Ativo", "dataCriacao": "2024-03-12" },
+  { "id": 8, "nome": "Arnica Montana 30CH", "descricao": "Medicamento homeopático para contusões", "categoria": "Homeopatia", "valor": 22.0, "status": "Inativo", "dataCriacao": "2024-03-20" },
+  { "id": 9, "nome": "Omeprazol 20mg Genérico", "descricao": "Inibidor de bomba de prótons, caixa com 28 cápsulas", "categoria": "Genéricos", "valor": 18.9, "status": "Ativo", "dataCriacao": "2024-04-01" },
+  { "id": 10, "nome": "Nexium 40mg", "descricao": "Esomeprazol magnésico, caixa com 7 comprimidos", "categoria": "Éticos", "valor": 89.5, "status": "Ativo", "dataCriacao": "2024-04-10" },
+  { "id": 11, "nome": "Losartana 50mg Similar", "descricao": "Anti-hipertensivo similar, caixa com 30 comprimidos", "categoria": "Similar", "valor": 35.0, "status": "Ativo", "dataCriacao": "2024-04-15" },
+  { "id": 12, "nome": "Perfume Chanel Nº5", "descricao": "Eau de parfum feminino, frasco 100ml", "categoria": "Perfumaria", "valor": 450.0, "status": "Inativo", "dataCriacao": "2024-05-01" }
+]
