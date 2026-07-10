@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import {
   flexRender,
@@ -11,7 +13,6 @@ import {
   type SortingState,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { z } from "zod"
 
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -69,28 +70,28 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsRightIcon,
-  CircleCheckIcon,
-  XCircleIcon,
   SearchIcon,
 } from "lucide-react"
 
-export const schema = z.object({
-  id: z.number(),
-  nome: z.string(),
-  email: z.string(),
-  tipo: z.enum(["Admin", "Comum"]),
-  ativo: z.boolean(),
-  dataCriacao: z.string(),
-})
+import { UsersService, ApiError } from "~/lib/api"
+import type { User } from "~/lib/api/types"
 
-export function UsersTable({
-  data: initialData,
-}: {
-  data: z.infer<typeof schema>[]
-}) {
-  const [data, setData] = React.useState(() => initialData)
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+}
+
+export function UsersTable() {
+  const [data, setData] = React.useState<User[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState({
@@ -98,66 +99,141 @@ export function UsersTable({
     pageSize: 10,
   })
 
-  const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [userToDelete, setUserToDelete] =
-    React.useState<z.infer<typeof schema> | null>(null)
+  const [userToDelete, setUserToDelete] = React.useState<User | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
-  const [editingUser, setEditingUser] =
-    React.useState<z.infer<typeof schema> | null>(null)
+  const [editingUser, setEditingUser] = React.useState<User | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
 
-  const [formNome, setFormNome] = React.useState("")
+  const [formName, setFormName] = React.useState("")
   const [formEmail, setFormEmail] = React.useState("")
-  const [formTipo, setFormTipo] = React.useState<"Admin" | "Comum">("Comum")
-  const [formAtivo, setFormAtivo] = React.useState(true)
+  const [formPhone, setFormPhone] = React.useState("")
+  const [formPassword, setFormPassword] = React.useState("")
+  const [formPasswordConfirmation, setFormPasswordConfirmation] =
+    React.useState("")
 
-  const openCreateDialog = () => {
-    setEditingUser(null)
-    setFormNome("")
-    setFormEmail("")
-    setFormTipo("Comum")
-    setFormAtivo(true)
-    setFormDialogOpen(true)
-  }
-
-  const openEditDialog = (user: z.infer<typeof schema>) => {
-    setEditingUser(user)
-    setFormNome(user.nome)
-    setFormEmail(user.email)
-    setFormTipo(user.tipo)
-    setFormAtivo(user.ativo)
-    setFormDialogOpen(true)
-  }
-
-  const handleSave = () => {
-    const action = editingUser ? "editado" : "criado"
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 500)), {
-      loading: editingUser
-        ? `Salvando ${formNome}...`
-        : `Criando ${formNome}...`,
-      success: `Usuário ${action} (simulado)`,
-      error: "Erro",
-    })
-    setFormDialogOpen(false)
-    setEditingUser(null)
-  }
+  // --- Fetch data ---
+  const fetchUsers = React.useCallback(() => {
+    setIsLoading(true)
+    setError(null)
+    UsersService.list()
+      .then(setData)
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          setError(err.message)
+        } else {
+          setError("Erro ao carregar usuários.")
+        }
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   React.useEffect(() => {
-    if (statusFilter === "all") {
-      setColumnFilters((prev) =>
-        prev.filter((f) => f.id !== "ativo")
-      )
-    } else {
-      setColumnFilters((prev) => {
-        const others = prev.filter((f) => f.id !== "ativo")
-        const value = statusFilter === "ativo"
-        return [...others, { id: "ativo", value }]
-      })
-    }
-  }, [statusFilter])
+    fetchUsers()
+  }, [fetchUsers])
 
-  const columns = React.useMemo<ColumnDef<z.infer<typeof schema>>[]>(
+  // --- Dialog helpers ---
+  const openCreateDialog = () => {
+    setEditingUser(null)
+    setFormName("")
+    setFormEmail("")
+    setFormPhone("")
+    setFormPassword("")
+    setFormPasswordConfirmation("")
+    setFormError(null)
+    setFormDialogOpen(true)
+  }
+
+  const openEditDialog = (user: User) => {
+    setEditingUser(user)
+    setFormName(user.name)
+    setFormEmail(user.email)
+    setFormPhone(user.phone ?? "")
+    setFormPassword("")
+    setFormPasswordConfirmation("")
+    setFormError(null)
+    setFormDialogOpen(true)
+  }
+
+  // --- Save (create/update) ---
+  const handleSave = async () => {
+    setFormError(null)
+    setIsSubmitting(true)
+
+    try {
+      if (editingUser) {
+        await UsersService.update(editingUser.id, {
+          name: formName,
+          email: formEmail,
+          phone: formPhone || undefined,
+          ...(formPassword ? { password: formPassword, password_confirmation: formPasswordConfirmation } : {}),
+        })
+        toast.success("Usuário atualizado com sucesso.")
+      } else {
+        if (!formPassword || formPassword.length < 8) {
+          setFormError("A senha deve ter pelo menos 8 caracteres.")
+          setIsSubmitting(false)
+          return
+        }
+        if (formPassword !== formPasswordConfirmation) {
+          setFormError("As senhas não conferem.")
+          setIsSubmitting(false)
+          return
+        }
+        await UsersService.create({
+          name: formName,
+          email: formEmail,
+          phone: formPhone || undefined,
+          password: formPassword,
+          password_confirmation: formPasswordConfirmation,
+        })
+        toast.success("Usuário criado com sucesso.")
+      }
+      setFormDialogOpen(false)
+      fetchUsers()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.errors) {
+          const msgs = Object.values(err.errors).flat()
+          setFormError(msgs.join(". "))
+        } else {
+          setFormError(err.message)
+        }
+      } else {
+        setFormError("Erro de conexão.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // --- Delete ---
+  const handleDelete = async () => {
+    if (!userToDelete) return
+    setIsDeleting(true)
+
+    try {
+      await UsersService.delete(userToDelete.id)
+      toast.success("Usuário excluído.")
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
+      fetchUsers()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "Erro ao excluir usuário.")
+      } else {
+        toast.error("Erro de conexão.")
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // --- Columns ---
+  const columns = React.useMemo<ColumnDef<User>[]>(
     () => [
       {
         id: "actions",
@@ -175,9 +251,7 @@ export function UsersTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem
-                onClick={() => openEditDialog(row.original)}
-              >
+              <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
                 Editar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -197,10 +271,10 @@ export function UsersTable({
         enableHiding: false,
       },
       {
-        accessorKey: "nome",
+        accessorKey: "name",
         header: "Nome",
         cell: ({ row }) => (
-          <div className="font-medium">{row.original.nome}</div>
+          <div className="font-medium">{row.original.name}</div>
         ),
         enableHiding: false,
       },
@@ -212,44 +286,27 @@ export function UsersTable({
         ),
       },
       {
-        accessorKey: "tipo",
-        header: "Tipo",
+        accessorKey: "phone",
+        header: "Telefone",
         cell: ({ row }) => (
-          <Badge variant="outline" className="px-1.5 text-muted-foreground">
-            {row.original.tipo}
-          </Badge>
+          <div className="text-muted-foreground">
+            {row.original.phone || "—"}
+          </div>
         ),
       },
       {
-        accessorKey: "ativo",
-        header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            variant="outline"
-            className="px-1.5 text-muted-foreground"
-          >
-            {row.original.ativo ? (
-              <CircleCheckIcon className="fill-green-500 dark:fill-green-400" />
-            ) : (
-              <XCircleIcon className="fill-red-500 dark:fill-red-400" />
-            )}
-            {row.original.ativo ? "Ativo" : "Inativo"}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "dataCriacao",
+        accessorKey: "created_at",
         header: () => (
           <div className="w-full text-right">Data de Criação</div>
         ),
         cell: ({ row }) => (
           <div className="text-right text-muted-foreground">
-            {new Date(row.original.dataCriacao).toLocaleDateString("pt-BR")}
+            {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
           </div>
         ),
       },
     ],
-    []
+    [],
   )
 
   const table = useReactTable({
@@ -260,7 +317,7 @@ export function UsersTable({
       columnFilters,
       pagination,
     },
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
@@ -270,6 +327,32 @@ export function UsersTable({
     getSortedRowModel: getSortedRowModel(),
   })
 
+  // --- Loading state ---
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="size-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <span className="text-sm">Carregando usuários...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // --- Error state ---
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" onClick={fetchUsers}>
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex flex-col gap-4 px-4 lg:px-6">
@@ -278,26 +361,16 @@ export function UsersTable({
             <div className="relative">
               <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar usuários..."
-                value={(table.getColumn("nome")?.getFilterValue() as string) ?? ""}
-                onChange={(event) =>
-                  table.getColumn("nome")?.setFilterValue(event.target.value)
+                placeholder="Buscar por nome..."
+                value={
+                  (table.getColumn("name")?.getFilterValue() as string) ?? ""
                 }
-                className="pl-8 w-64 h-8"
+                onChange={(event) =>
+                  table.getColumn("name")?.setFilterValue(event.target.value)
+                }
+                className="w-64 pl-8 h-8"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 !h-8">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex items-center gap-2">
             <Button size="lg" onClick={openCreateDialog}>
@@ -319,13 +392,15 @@ export function UsersTable({
                       <TableHead
                         key={header.id}
                         colSpan={header.colSpan}
-                        className={header.column.id === "actions" ? "w-8" : undefined}
+                        className={
+                          header.column.id === "actions" ? "w-8" : undefined
+                        }
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     )
@@ -343,11 +418,13 @@ export function UsersTable({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={cell.column.id === "actions" ? "w-8" : undefined}
+                        className={
+                          cell.column.id === "actions" ? "w-8" : undefined
+                        }
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -359,7 +436,7 @@ export function UsersTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    Nenhum resultado encontrado.
+                    Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -448,8 +525,12 @@ export function UsersTable({
         </div>
       </div>
 
+      {/* Create / Edit dialog */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="sm:max-w-md"
+        >
           <DialogHeader>
             <DialogTitle>
               {editingUser ? "Editar Usuário" : "Novo Usuário"}
@@ -460,14 +541,23 @@ export function UsersTable({
                 : "Preencha os dados para criar um novo usuário."}
             </DialogDescription>
           </DialogHeader>
+
+          {formError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
+
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="nome">Nome</FieldLabel>
+              <FieldLabel htmlFor="name">Nome</FieldLabel>
               <Input
-                id="nome"
-                value={formNome}
-                onChange={(e) => setFormNome(e.target.value)}
+                id="name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
                 placeholder="Nome completo"
+                required
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -477,82 +567,98 @@ export function UsersTable({
                 type="email"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
-                placeholder="email@farmacia.com"
+                placeholder="email@exemplo.com"
+                required
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
-              <Select value={formTipo} onValueChange={(v) => setFormTipo(v as "Admin" | "Comum")}>
-                <SelectTrigger id="tipo" className="!h-8">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Comum">Comum</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <FieldLabel htmlFor="phone">Telefone</FieldLabel>
+              <Input
+                id="phone"
+                type="tel"
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="+5511999999999"
+                disabled={isSubmitting}
+              />
             </Field>
             <Field>
-              <FieldLabel htmlFor="ativo">Status</FieldLabel>
-              <Select
-                value={formAtivo ? "ativo" : "inativo"}
-                onValueChange={(v) => setFormAtivo(v === "ativo")}
-              >
-                <SelectTrigger id="ativo" className="!h-8">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <FieldLabel htmlFor="password">
+                {editingUser ? "Nova senha (deixe em branco para manter)" : "Senha"}
+              </FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                placeholder={editingUser ? "Nova senha" : "Mínimo 8 caracteres"}
+                minLength={editingUser ? undefined : 8}
+                required={!editingUser}
+                disabled={isSubmitting}
+              />
             </Field>
+            {formPassword && (
+              <Field>
+                <FieldLabel htmlFor="password-confirmation">
+                  Confirmar Senha
+                </FieldLabel>
+                <Input
+                  id="password-confirmation"
+                  type="password"
+                  value={formPasswordConfirmation}
+                  onChange={(e) =>
+                    setFormPasswordConfirmation(e.target.value)
+                  }
+                  placeholder="Repita a senha"
+                  disabled={isSubmitting}
+                />
+              </Field>
+            )}
           </FieldGroup>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setFormDialogOpen(false)}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSave}>
-              {editingUser ? "Salvar" : "Criar"}
+            <Button onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting
+                ? "Salvando..."
+                : editingUser
+                  ? "Salvar"
+                  : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o usuário "
-              {userToDelete?.nome}"? Esta ação não pode ser desfeita.
+              {userToDelete?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => setUserToDelete(null)}
+              disabled={isDeleting}
             >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                toast.promise(
-                  new Promise((resolve) => setTimeout(resolve, 500)),
-                  {
-                    loading: `Excluindo ${userToDelete?.nome}...`,
-                    success: "Usuário excluído",
-                    error: "Erro ao excluir",
-                  }
-                )
-                setUserToDelete(null)
-              }}
+              onClick={handleDelete}
+              disabled={isDeleting}
             >
-              Excluir
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

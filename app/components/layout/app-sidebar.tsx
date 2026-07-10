@@ -14,14 +14,21 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "~/components/ui/sidebar"
-import { UsersIcon, TruckIcon, PackageIcon, Sprout, ListIcon, UserCogIcon, BotIcon, LayoutDashboardIcon, FileTextIcon } from "lucide-react"
+import {
+  UsersIcon,
+  TruckIcon,
+  PackageIcon,
+  Sprout,
+  ListIcon,
+  UserCogIcon,
+  BotIcon,
+  LayoutDashboardIcon,
+  FileTextIcon,
+} from "lucide-react"
 import { Link } from "react-router"
+import { useAuth } from "~/hooks/use-auth"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-  },
+const navData = {
   navPrimary: [
     {
       title: "Notas Fiscais",
@@ -74,6 +81,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -91,9 +100,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain title="Menu Principal" items={data.navPrimary} />
+        <NavMain title="Menu Principal" items={navData.navPrimary} />
         <SidebarSeparator />
-        <NavMain title="Em Breve" items={data.navSecondary} />
+        <NavMain title="Em Breve" items={navData.navSecondary} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -101,7 +110,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <AiAssistantDialog />
           </SidebarMenuItem>
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser
+          user={
+            user
+              ? { name: user.name, email: user.email }
+              : { name: "Carregando...", email: "" }
+          }
+        />
       </SidebarFooter>
     </Sidebar>
   )

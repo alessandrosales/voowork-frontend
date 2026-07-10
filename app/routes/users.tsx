@@ -1,8 +1,6 @@
-import { UsersTable, schema } from "~/components/users/users-table"
-import type { z } from "zod"
+"use client"
 
-import rawData from "../users/data.json"
-const data = rawData as z.infer<typeof schema>[]
+import { UsersTable } from "~/components/users/users-table"
 
 export default function UsersPage() {
   return (
@@ -14,7 +12,7 @@ export default function UsersPage() {
               Usuários
             </h1>
           </div>
-          <UsersTable data={data} />
+          <UsersTable />
         </div>
       </div>
     </div>
