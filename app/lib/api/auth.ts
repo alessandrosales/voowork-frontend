@@ -5,8 +5,11 @@
 
 import { apiGet, apiPatch, apiPost, setToken } from "./client"
 import type {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   LoginRequest,
   LoginResponse,
+  RecoverPasswordRequest,
   RegisterRequest,
   RegisterResponse,
   User,
@@ -58,6 +61,37 @@ export const AuthService = {
     }>,
   ): Promise<User> {
     return apiPatch<User>(`${AUTH_PREFIX}/me`, { user: data })
+  },
+
+  /**
+   * Solicita redefinição de senha (POST /auth/recover-password).
+   * Envia email com link contendo o reset_token.
+   * Retorna 204 sempre (mesmo se email não existir), então o tipo é void.
+   */
+  async recoverPassword(email: string): Promise<void> {
+    const body: RecoverPasswordRequest = { auth: { email } }
+    await apiPost<void>(`${AUTH_PREFIX}/recover-password`, body)
+  },
+
+  /**
+   * Redefine a senha com o token recebido por email (POST /auth/change-password).
+   * Em caso de sucesso retorna um novo JWT + dados do usuário.
+   */
+  async changePassword(
+    reset_token: string,
+    password: string,
+    password_confirmation: string,
+  ): Promise<ChangePasswordResponse> {
+    const body: ChangePasswordRequest = {
+      auth: { reset_token, password, password_confirmation },
+    }
+    const res = await apiPost<ChangePasswordResponse>(
+      `${AUTH_PREFIX}/change-password`,
+      body,
+    )
+    // A nova senha gera um novo JWT — persiste automaticamente
+    setToken(res.token)
+    return res
   },
 
   /**

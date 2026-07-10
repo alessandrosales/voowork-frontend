@@ -94,6 +94,26 @@ export interface RegisterResponse {
   account: Account
 }
 
+/* ---------- Password Recovery ---------- */
+export interface RecoverPasswordRequest {
+  auth: {
+    email: string
+  }
+}
+
+export interface ChangePasswordRequest {
+  auth: {
+    reset_token: string
+    password: string
+    password_confirmation: string
+  }
+}
+
+export interface ChangePasswordResponse {
+  token: string
+  user: User
+}
+
 /* ---------- Common ---------- */
 export interface ApiErrorBody {
   errors: Record<string, string[]>

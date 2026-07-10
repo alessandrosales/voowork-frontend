@@ -12,5 +12,8 @@ export type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  RecoverPasswordRequest,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   ApiErrorBody,
 } from "./types"
