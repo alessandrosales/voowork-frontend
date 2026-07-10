@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/sidebar"
 import * as React from "react"
 import { Link } from "react-router"
-import { useTheme } from "~/components/theme-provider"
+import { useTheme } from "~/components/shared/theme-provider"
 import {
   EllipsisVerticalIcon,
   CircleUserRoundIcon,

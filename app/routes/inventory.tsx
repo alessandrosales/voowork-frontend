@@ -1,4 +1,4 @@
-import { InventoryTable, schema } from "~/components/inventory-table"
+import { InventoryTable, schema } from "~/components/inventory/inventory-table"
 import type { z } from "zod"
 
 import rawData from "../inventory/data.json"

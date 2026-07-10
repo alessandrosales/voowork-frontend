@@ -1,4 +1,4 @@
-import { AgentsTable, schema } from "~/components/agents-table"
+import { AgentsTable, schema } from "~/components/agents/agents-table"
 import type { z } from "zod"
 
 import rawData from "../agents/data.json"

@@ -1,9 +1,9 @@
 import * as React from "react"
 
-import { Logo } from "~/components/logo"
-import { AiAssistantDialog } from "~/components/ai-assistant-dialog"
-import { NavMain } from "~/components/nav-main"
-import { NavUser } from "~/components/nav-user"
+import { Logo } from "~/components/shared/logo"
+import { AiAssistantDialog } from "~/components/agents/ai-assistant-dialog"
+import { NavMain } from "~/components/layout/nav-main"
+import { NavUser } from "~/components/layout/nav-user"
 import {
   Sidebar,
   SidebarContent,

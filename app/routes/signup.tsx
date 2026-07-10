@@ -1,7 +1,7 @@
 "use client"
 
-import { Logo } from "~/components/logo"
-import { SignupForm } from "~/components/signup-form"
+import { Logo } from "~/components/shared/logo"
+import { SignupForm } from "~/components/auth/signup-form"
 
 export default function SignupPage() {
   return (

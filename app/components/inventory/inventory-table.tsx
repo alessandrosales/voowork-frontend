@@ -80,7 +80,7 @@ import {
   ArrowDownIcon,
 } from "lucide-react"
 
-import movementsRaw from "../inventory/movements.json"
+import movementsRaw from "../../inventory/movements.json"
 
 export const schema = z.object({
   id: z.number(),

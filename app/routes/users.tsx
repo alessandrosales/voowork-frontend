@@ -1,4 +1,4 @@
-import { UsersTable, schema } from "~/components/users-table"
+import { UsersTable, schema } from "~/components/users/users-table"
 import type { z } from "zod"
 
 import rawData from "../users/data.json"

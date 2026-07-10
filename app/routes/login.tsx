@@ -1,7 +1,7 @@
 "use client"
 
-import { Logo } from "~/components/logo"
-import { LoginForm } from "~/components/login-form"
+import { Logo } from "~/components/shared/logo"
+import { LoginForm } from "~/components/auth/login-form"
 
 export default function LoginPage() {
   return (

@@ -1,4 +1,4 @@
-import { InvoicesTable, schema } from "~/components/invoices-table"
+import { InvoicesTable, schema } from "~/components/invoices/invoices-table"
 import type { z } from "zod"
 
 import rawData from "../invoices/data.json"

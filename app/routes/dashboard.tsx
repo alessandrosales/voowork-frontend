@@ -1,6 +1,6 @@
-import { ChartAreaInteractive } from "~/components/chart-area-interactive"
-import { LowStockTable } from "~/components/low-stock-table"
-import { SectionCards } from "~/components/section-cards"
+import { ChartAreaInteractive } from "~/components/dashboard/chart-area-interactive"
+import { LowStockTable } from "~/components/dashboard/low-stock-table"
+import { SectionCards } from "~/components/dashboard/section-cards"
 
 import inventoryData from "../inventory/data.json"
 import movementsData from "../inventory/movements.json"

@@ -1,4 +1,4 @@
-import { SuppliesTable, schema } from "~/components/supplies-table"
+import { SuppliesTable, schema } from "~/components/supplies/supplies-table"
 import type { z } from "zod"
 
 import rawData from "../supplies/data.json"

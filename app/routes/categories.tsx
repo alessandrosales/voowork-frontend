@@ -1,4 +1,4 @@
-import { CategoriesTable } from "~/components/categories-table"
+import { CategoriesTable } from "~/components/categories/categories-table"
 
 import data from "../categories/data.json"
 

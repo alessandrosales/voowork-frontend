@@ -9,7 +9,8 @@ import {
 
 import type { Route } from "./+types/root"
 import { TooltipProvider } from "~/components/ui/tooltip"
-import { ThemeProvider } from "~/components/theme-provider"
+import { ThemeProvider } from "~/components/shared/theme-provider"
+import { AuthProvider } from "~/hooks/use-auth"
 import "./app.css"
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -39,7 +40,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body suppressHydrationWarning>
         <ThemeProvider defaultTheme="system" storageKey="pharmacy-ui-theme">
           <TooltipProvider>
-            {children}
+            <AuthProvider>
+              {children}
+            </AuthProvider>
           </TooltipProvider>
         </ThemeProvider>
         <ScrollRestoration />

@@ -30,7 +30,7 @@ import {
   ToggleGroupItem,
 } from "~/components/ui/toggle-group"
 
-import movementsData from "../inventory/movements.json"
+import movementsData from "../../inventory/movements.json"
 
 export const description = "An interactive area chart"
 
