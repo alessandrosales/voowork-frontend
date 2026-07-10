@@ -8,7 +8,7 @@ export interface Account {
   id: string
   name: string
   email: string
-  preferred_language: "en" | "pt-BR" | "es"
+  preferred_language: "en" | "pt_br" | "es"
   created_at: string
 }
 
@@ -19,7 +19,7 @@ export interface User {
   name: string
   email: string
   phone: string | null
-  preferred_language: "en" | "pt-BR" | "es"
+  preferred_language: "en" | "pt_br" | "es"
   created_at: string
   updated_at: string
 }

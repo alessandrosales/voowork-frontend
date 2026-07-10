@@ -31,6 +31,7 @@ export function SignupForm({
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -55,13 +56,14 @@ export function SignupForm({
     try {
       await register({
         account: {
-          name: email.split("@")[0], // nome provisório para a conta
+          name: name, // O nome da conta é o nome completo do usuário
           email: email,
-          preferred_language: "pt-BR",
+          preferred_language: "pt_br",
         },
         user: {
           name,
           email,
+          phone: phone || undefined,
           password,
           password_confirmation: confirmPassword,
         },
@@ -70,7 +72,6 @@ export function SignupForm({
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.errors) {
-          // Mostra o primeiro erro de cada campo
           const messages = Object.values(err.errors).flat()
           setError(messages.join(". "))
         } else {
@@ -123,6 +124,17 @@ export function SignupForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isSubmitting}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="phone">Telefone (opcional)</FieldLabel>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+5511999999999"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   disabled={isSubmitting}
                 />
               </Field>
