@@ -103,4 +103,4 @@ React Router generates route types to `.react-router/types/`. The `typecheck` co
 - This file is referenced as `instructions` in `opencode.jsonc`
 - Agent definitions are in `.opencode/agents/` (10 agents)
 - Skills in `.agents/skills/shadcn/`, `.agents/skills/tailwind-best-practices/`, `.agents/skills/tailwind-design-system/`
-- Agent system prompts reference "allfinance-frontend" (the template this was generated from)
+- Agent system prompts reference "agrojg-frontend" (the template this was generated from)
