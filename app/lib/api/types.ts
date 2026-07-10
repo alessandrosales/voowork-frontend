@@ -114,6 +114,93 @@ export interface ChangePasswordResponse {
   user: User
 }
 
+/* ---------- Producer ---------- */
+export interface Producer {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Farm ---------- */
+export interface Farm {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Harvest ---------- */
+export interface Harvest {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Unit ---------- */
+export interface Unit {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Product ---------- */
+export interface Product {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Company ---------- */
+export interface Company {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- InvoiceType ---------- */
+export interface InvoiceType {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Invoice ---------- */
+export interface Invoice {
+  id: string
+  account_id: string
+  harvest_id: string
+  producer_id: string
+  farm_id: string
+  number: string
+  date: string
+  supplier_id: string
+  product_id: string
+  unit_id: string
+  quantity: number
+  unit_price: number
+  total_value: number
+  origin_invoice_id: string | null
+  company_id: string
+  type_id: string
+  delivery: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 /* ---------- Common ---------- */
 export interface ApiErrorBody {
   errors: Record<string, string[]>

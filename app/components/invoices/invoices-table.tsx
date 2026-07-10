@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import {
   flexRender,
@@ -72,8 +74,24 @@ import {
   SearchIcon,
 } from "lucide-react"
 
+import {
+  CreatableInput,
+  type CreatableField,
+} from "~/components/shared/creatable-input"
+import {
+  InvoicesService,
+  ProducersService,
+  FarmsService,
+  HarvestsService,
+  UnitsService,
+  ProductsService,
+  CompaniesService,
+  InvoiceTypesService,
+  ApiError,
+} from "~/lib/api"
+
 export const schema = z.object({
-  id: z.number(),
+  id: z.string(),
   safra: z.string(),
   produtor: z.string(),
   fazenda: z.string(),
@@ -129,77 +147,154 @@ export function InvoicesTable({
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingInvoice, setEditingInvoice] =
     React.useState<z.infer<typeof schema> | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
 
-  const [formSafra, setFormSafra] = React.useState("")
-  const [formProdutor, setFormProdutor] = React.useState("")
-  const [formFazenda, setFormFazenda] = React.useState("")
-  const [formNfOrigem, setFormNfOrigem] = React.useState("")
-  const [formEmpresa, setFormEmpresa] = React.useState("")
-  const [formTipo, setFormTipo] = React.useState("")
+  // Relational fields — CreatableField: { name, selectedId }
+  const [formHarvest, setFormHarvest] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formProducer, setFormProducer] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formFarm, setFormFarm] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formCompany, setFormCompany] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formInvoiceType, setFormInvoiceType] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formSupplier, setFormSupplier] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formProduct, setFormProduct] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formUnit, setFormUnit] = React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formOriginInvoice, setFormOriginInvoice] = React.useState<CreatableField>({ name: "", selectedId: null })
+
+  // Direct fields
   const [formNotaFiscal, setFormNotaFiscal] = React.useState("")
   const [formDataNF, setFormDataNF] = React.useState("")
-  const [formFornecedor, setFormFornecedor] = React.useState("")
-  const [formProduto, setFormProduto] = React.useState("")
-  const [formUnidade, setFormUnidade] = React.useState("TO")
   const [formQuantidade, setFormQuantidade] = React.useState("")
   const [formPrecoUnitario, setFormPrecoUnitario] = React.useState("")
   const [formValorTotal, setFormValorTotal] = React.useState("")
   const [formEntrega, setFormEntrega] = React.useState("")
   const [formObservacoes, setFormObservacoes] = React.useState("")
 
-  const openCreateDialog = () => {
+  const resetForm = () => {
     setEditingInvoice(null)
-    setFormSafra("")
-    setFormProdutor("")
-    setFormFazenda("")
-    setFormNfOrigem("")
-    setFormEmpresa("")
-    setFormTipo("")
+    setFormHarvest({ name: "", selectedId: null })
+    setFormProducer({ name: "", selectedId: null })
+    setFormFarm({ name: "", selectedId: null })
+    setFormCompany({ name: "", selectedId: null })
+    setFormInvoiceType({ name: "", selectedId: null })
+    setFormSupplier({ name: "", selectedId: null })
+    setFormProduct({ name: "", selectedId: null })
+    setFormUnit({ name: "", selectedId: null })
+    setFormOriginInvoice({ name: "", selectedId: null })
     setFormNotaFiscal("")
     setFormDataNF("")
-    setFormFornecedor("")
-    setFormProduto("")
-    setFormUnidade("TO")
     setFormQuantidade("")
     setFormPrecoUnitario("")
     setFormValorTotal("")
     setFormEntrega("")
     setFormObservacoes("")
+    setFormError(null)
+    setIsSubmitting(false)
+  }
+
+  const openCreateDialog = () => {
+    resetForm()
     setFormDialogOpen(true)
   }
 
   const openEditDialog = (invoice: z.infer<typeof schema>) => {
     setEditingInvoice(invoice)
-    setFormSafra(invoice.safra)
-    setFormProdutor(invoice.produtor)
-    setFormFazenda(invoice.fazenda)
-    setFormNfOrigem(invoice.nfOrigem)
-    setFormEmpresa(invoice.empresa)
-    setFormTipo(invoice.tipo)
+    // Relational fields — populate from display data
+    setFormHarvest({ name: invoice.safra, selectedId: null })
+    setFormProducer({ name: invoice.produtor, selectedId: null })
+    setFormFarm({ name: invoice.fazenda, selectedId: null })
+    setFormCompany({ name: invoice.empresa, selectedId: null })
+    setFormInvoiceType({ name: invoice.tipo, selectedId: null })
+    setFormSupplier({ name: invoice.fornecedor, selectedId: null })
+    setFormProduct({ name: invoice.produto, selectedId: null })
+    setFormUnit({ name: invoice.unidade, selectedId: null })
+    setFormOriginInvoice({ name: invoice.nfOrigem, selectedId: null })
+    // Direct fields
     setFormNotaFiscal(invoice.notaFiscal)
     setFormDataNF(invoice.dataNF)
-    setFormFornecedor(invoice.fornecedor)
-    setFormProduto(invoice.produto)
-    setFormUnidade(invoice.unidade)
     setFormQuantidade(String(invoice.quantidade))
     setFormPrecoUnitario(String(invoice.precoUnitario))
     setFormValorTotal(String(invoice.valorTotal))
     setFormEntrega(invoice.entrega)
     setFormObservacoes(invoice.observacoes)
+    setFormError(null)
+    setIsSubmitting(false)
     setFormDialogOpen(true)
   }
 
-  const handleSave = () => {
-    const action = editingInvoice ? "editada" : "criada"
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 500)), {
-      loading: editingInvoice
-        ? `Salvando NF ${formNotaFiscal}...`
-        : `Criando NF ${formNotaFiscal}...`,
-      success: `Nota fiscal ${action} (simulado)`,
-      error: "Erro",
-    })
-    setFormDialogOpen(false)
-    setEditingInvoice(null)
+  /**
+   * Ensures a resource exists: if selectedId is set, uses it;
+   * otherwise creates a new record with the typed name.
+   */
+  const ensure = async <T extends { id: string }>(
+    field: CreatableField,
+    createFn: (data: { name: string }) => Promise<T>,
+  ): Promise<string> => {
+    if (field.selectedId) return field.selectedId
+    if (!field.name.trim()) return ""
+    const created = await createFn({ name: field.name })
+    return created.id
+  }
+
+  const handleSave = async () => {
+    setFormError(null)
+    setIsSubmitting(true)
+
+    try {
+      // Auto-cria registros não selecionados (todos independentes)
+      const [producerId, farmId, harvestId, unitId, productId, companyId, invoiceTypeId, supplierId] =
+        await Promise.all([
+          ensure(formProducer, ProducersService.create),
+          ensure(formFarm, FarmsService.create),
+          ensure(formHarvest, HarvestsService.create),
+          ensure(formUnit, UnitsService.create),
+          ensure(formProduct, ProductsService.create),
+          ensure(formCompany, CompaniesService.create),
+          ensure(formInvoiceType, InvoiceTypesService.create),
+          ensure(formSupplier, CompaniesService.create),
+        ])
+
+      const payload: Record<string, unknown> = {
+        number: formNotaFiscal,
+        date: formDataNF,
+        harvest_id: harvestId,
+        producer_id: producerId,
+        farm_id: farmId,
+        company_id: companyId,
+        type_id: invoiceTypeId,
+        supplier_id: supplierId,
+        product_id: productId,
+        unit_id: unitId,
+        quantity: Number(formQuantidade) || 0,
+        unit_price: Number(formPrecoUnitario) || 0,
+        total_value: Number(formValorTotal) || 0,
+        ...(formEntrega ? { delivery: formEntrega } : {}),
+        ...(formObservacoes ? { notes: formObservacoes } : {}),
+      }
+
+      if (editingInvoice) {
+        await InvoicesService.update(editingInvoice.id, payload)
+        toast.success("Nota fiscal atualizada com sucesso.")
+      } else {
+        await InvoicesService.create(payload as Parameters<typeof InvoicesService.create>[0])
+        toast.success("Nota fiscal criada com sucesso.")
+      }
+      setFormDialogOpen(false)
+      resetForm()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.errors) {
+          const msgs = Object.values(err.errors).flat()
+          setFormError(msgs.join(". "))
+        } else {
+          setFormError(err.message)
+        }
+      } else {
+        setFormError("Erro de conexão.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   React.useEffect(() => {
@@ -586,59 +681,70 @@ export function InvoicesTable({
                 : "Preencha os dados para criar uma nova nota fiscal."}
             </DialogDescription>
           </DialogHeader>
+          {formError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
           <FieldGroup className="grid grid-cols-2 gap-4">
             <Field>
-              <FieldLabel htmlFor="safra">Safra</FieldLabel>
-              <Input
-                id="safra"
-                value={formSafra}
-                onChange={(e) => setFormSafra(e.target.value)}
-                placeholder="ex: SOJA 24/25"
+              <FieldLabel>Safra</FieldLabel>
+              <CreatableInput
+                value={formHarvest}
+                onChange={setFormHarvest}
+                searchFn={HarvestsService.search}
+                placeholder="Digite a safra..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="produtor">Produtor</FieldLabel>
-              <Input
-                id="produtor"
-                value={formProdutor}
-                onChange={(e) => setFormProdutor(e.target.value)}
-                placeholder="Nome do produtor"
+              <FieldLabel>Produtor</FieldLabel>
+              <CreatableInput
+                value={formProducer}
+                onChange={setFormProducer}
+                searchFn={ProducersService.search}
+                placeholder="Digite o produtor..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="fazenda">Fazenda</FieldLabel>
-              <Input
-                id="fazenda"
-                value={formFazenda}
-                onChange={(e) => setFormFazenda(e.target.value)}
-                placeholder="Nome da fazenda"
+              <FieldLabel>Fazenda</FieldLabel>
+              <CreatableInput
+                value={formFarm}
+                onChange={setFormFarm}
+                searchFn={FarmsService.search}
+                placeholder="Digite a fazenda..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
               <FieldLabel htmlFor="nfOrigem">NF Origem</FieldLabel>
               <Input
                 id="nfOrigem"
-                value={formNfOrigem}
-                onChange={(e) => setFormNfOrigem(e.target.value)}
+                value={formOriginInvoice.name}
+                onChange={(e) => setFormOriginInvoice({ name: e.target.value, selectedId: null })}
                 placeholder="Número da NF de origem"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="empresa">Empresa</FieldLabel>
-              <Input
-                id="empresa"
-                value={formEmpresa}
-                onChange={(e) => setFormEmpresa(e.target.value)}
-                placeholder="Empresa compradora"
+              <FieldLabel>Empresa</FieldLabel>
+              <CreatableInput
+                value={formCompany}
+                onChange={setFormCompany}
+                searchFn={CompaniesService.search}
+                placeholder="Digite a empresa..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="tipo">Tipo</FieldLabel>
-              <Input
-                id="tipo"
-                value={formTipo}
-                onChange={(e) => setFormTipo(e.target.value)}
-                placeholder="Tipo da operação"
+              <FieldLabel>Tipo</FieldLabel>
+              <CreatableInput
+                value={formInvoiceType}
+                onChange={setFormInvoiceType}
+                searchFn={InvoiceTypesService.search}
+                placeholder="Digite o tipo..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -648,6 +754,7 @@ export function InvoicesTable({
                 value={formNotaFiscal}
                 onChange={(e) => setFormNotaFiscal(e.target.value)}
                 placeholder="Número da NF"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -657,42 +764,38 @@ export function InvoicesTable({
                 type="date"
                 value={formDataNF}
                 onChange={(e) => setFormDataNF(e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
             <Field className="col-span-2">
-              <FieldLabel htmlFor="fornecedor">Fornecedor</FieldLabel>
-              <Input
-                id="fornecedor"
-                value={formFornecedor}
-                onChange={(e) => setFormFornecedor(e.target.value)}
-                placeholder="Nome do fornecedor"
+              <FieldLabel>Fornecedor</FieldLabel>
+              <CreatableInput
+                value={formSupplier}
+                onChange={setFormSupplier}
+                searchFn={CompaniesService.search}
+                placeholder="Digite o fornecedor..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="produto">Produto</FieldLabel>
-              <Input
-                id="produto"
-                value={formProduto}
-                onChange={(e) => setFormProduto(e.target.value)}
-                placeholder="Nome do produto"
+              <FieldLabel>Produto</FieldLabel>
+              <CreatableInput
+                value={formProduct}
+                onChange={setFormProduct}
+                searchFn={ProductsService.search}
+                placeholder="Digite o produto..."
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="unidade">Unidade</FieldLabel>
-              <Select value={formUnidade} onValueChange={setFormUnidade}>
-                <SelectTrigger id="unidade" className="!h-8">
-                  <SelectValue placeholder="Unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="TO">TO (Tonelada)</SelectItem>
-                    <SelectItem value="KG">KG (Quilograma)</SelectItem>
-                    <SelectItem value="L">L (Litro)</SelectItem>
-                    <SelectItem value="SC">SC (Saca)</SelectItem>
-                    <SelectItem value="UN">UN (Unidade)</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <FieldLabel>Unidade</FieldLabel>
+              <CreatableInput
+                value={formUnit}
+                onChange={setFormUnit}
+                searchFn={UnitsService.search}
+                placeholder="Digite a unidade..."
+                disabled={isSubmitting}
+              />
             </Field>
             <Field>
               <FieldLabel htmlFor="quantidade">Quantidade</FieldLabel>
@@ -703,6 +806,7 @@ export function InvoicesTable({
                 value={formQuantidade}
                 onChange={(e) => setFormQuantidade(e.target.value)}
                 placeholder="0,00"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -714,6 +818,7 @@ export function InvoicesTable({
                 value={formPrecoUnitario}
                 onChange={(e) => setFormPrecoUnitario(e.target.value)}
                 placeholder="0,00"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -725,6 +830,7 @@ export function InvoicesTable({
                 value={formValorTotal}
                 onChange={(e) => setFormValorTotal(e.target.value)}
                 placeholder="0,00"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -734,6 +840,7 @@ export function InvoicesTable({
                 value={formEntrega}
                 onChange={(e) => setFormEntrega(e.target.value)}
                 placeholder="Status/data de entrega"
+                disabled={isSubmitting}
               />
             </Field>
             <Field className="col-span-2">
@@ -743,15 +850,24 @@ export function InvoicesTable({
                 value={formObservacoes}
                 onChange={(e) => setFormObservacoes(e.target.value)}
                 placeholder="Observações adicionais"
+                disabled={isSubmitting}
               />
             </Field>
           </FieldGroup>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setFormDialogOpen(false)}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSave}>
-              {editingInvoice ? "Salvar" : "Criar"}
+            <Button onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting
+                ? "Salvando..."
+                : editingInvoice
+                  ? "Salvar"
+                  : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>
