@@ -103,7 +103,7 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate("/meus-dados")}>
                 <CircleUserRoundIcon />
                 Meus Dados
               </DropdownMenuItem>

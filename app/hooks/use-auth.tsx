@@ -31,6 +31,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 /* ---------- Context ---------- */
@@ -75,6 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const u = await AuthService.me()
+      setUser(u)
+    } catch {
+      // Token inválido/expirado — logout silencioso
+      AuthService.logout()
+      setUser(null)
+    }
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -84,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

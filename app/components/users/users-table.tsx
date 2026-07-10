@@ -73,6 +73,7 @@ import {
   SearchIcon,
 } from "lucide-react"
 
+import { useAuth } from "~/hooks/use-auth"
 import { UsersService, ApiError } from "~/lib/api"
 import type { User } from "~/lib/api/types"
 
@@ -87,6 +88,7 @@ function getInitials(name: string): string {
 }
 
 export function UsersTable() {
+  const { user: currentUser } = useAuth()
   const [data, setData] = React.useState<User[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -213,6 +215,14 @@ export function UsersTable() {
   // --- Delete ---
   const handleDelete = async () => {
     if (!userToDelete) return
+
+    if (userToDelete.id === currentUser?.id) {
+      toast.error("Você não pode excluir seu próprio usuário.")
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
+      return
+    }
+
     setIsDeleting(true)
 
     try {
@@ -257,7 +267,12 @@ export function UsersTable() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
+                disabled={row.original.id === currentUser?.id}
                 onClick={() => {
+                  if (row.original.id === currentUser?.id) {
+                    toast.error("Você não pode excluir seu próprio usuário.")
+                    return
+                  }
                   setUserToDelete(row.original)
                   setDeleteDialogOpen(true)
                 }}

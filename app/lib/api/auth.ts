@@ -3,7 +3,7 @@
 /*  Toda comunicação com /api/v1/auth/*                                */
 /* ------------------------------------------------------------------ */
 
-import { apiGet, apiPost, setToken } from "./client"
+import { apiGet, apiPatch, apiPost, setToken } from "./client"
 import type {
   LoginRequest,
   LoginResponse,
@@ -42,6 +42,22 @@ export const AuthService = {
    */
   async me(): Promise<User> {
     return apiGet<User>(`${AUTH_PREFIX}/me`)
+  },
+
+  /**
+   * Atualiza perfil do usuário autenticado (PATCH /auth/me).
+   */
+  async updateProfile(
+    data: Partial<{
+      name: string
+      email: string
+      phone: string
+      preferred_language: User["preferred_language"]
+      password: string
+      password_confirmation: string
+    }>,
+  ): Promise<User> {
+    return apiPatch<User>(`${AUTH_PREFIX}/me`, { user: data })
   },
 
   /**

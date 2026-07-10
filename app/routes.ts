@@ -11,6 +11,7 @@ export default [
     route("agentes", "routes/agents.tsx"),
     route("insumos", "routes/supplies.tsx"),
     route("estoques", "routes/inventory.tsx"),
+    route("meus-dados", "routes/profile.tsx"),
   ]),
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),
