@@ -1,6 +1,5 @@
 "use client"
 
-import { Logo } from "~/components/shared/logo"
 import { LoginForm } from "~/components/auth/login-form"
 
 export default function LoginPage() {
@@ -8,7 +7,11 @@ export default function LoginPage() {
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-auth p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="/" className="self-center">
-          <Logo className="h-10 w-auto" />
+          <img
+            src="/logo.svg"
+            alt="AgroJG"
+            className="h-10 w-auto"
+          />
         </a>
         <LoginForm />
       </div>
