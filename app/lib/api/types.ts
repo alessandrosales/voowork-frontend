@@ -164,6 +164,8 @@ export interface Company {
   id: string
   account_id: string
   name: string
+  producer: boolean
+  supplier: boolean
   created_at: string
   updated_at: string
 }

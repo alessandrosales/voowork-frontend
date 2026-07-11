@@ -1,6 +1,7 @@
 /* ------------------------------------------------------------------ */
 /*  Companies service — CRUD de empresas                              */
 /*  Toda comunicação com /api/v1/companies/*                           */
+/*  Unificado: produtores e fornecedores são tipos de company.        */
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
@@ -17,11 +18,11 @@ export const CompaniesService = {
     return apiGet<Company>(`${COMPANIES_PATH}/${id}`)
   },
 
-  async create(data: { name: string }): Promise<Company> {
+  async create(data: { name: string; producer?: boolean; supplier?: boolean }): Promise<Company> {
     return apiPost<Company>(COMPANIES_PATH, { company: data })
   },
 
-  async update(id: string, data: Partial<{ name: string }>): Promise<Company> {
+  async update(id: string, data: Partial<{ name: string; producer?: boolean; supplier?: boolean }>): Promise<Company> {
     return apiPatch<Company>(`${COMPANIES_PATH}/${id}`, { company: data })
   },
 
@@ -31,5 +32,13 @@ export const CompaniesService = {
 
   async search(name: string): Promise<Company[]> {
     return apiGet<Company[]>(COMPANIES_PATH, { name })
+  },
+
+  async searchProducers(name: string): Promise<Company[]> {
+    return apiGet<Company[]>(COMPANIES_PATH, { name, producer: "true" })
+  },
+
+  async searchSuppliers(name: string): Promise<Company[]> {
+    return apiGet<Company[]>(COMPANIES_PATH, { name, supplier: "true" })
   },
 }

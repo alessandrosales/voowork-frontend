@@ -25,7 +25,6 @@ import { DatePickerInput } from "~/components/shared/date-picker-input"
 import { CurrencyInput } from "~/components/shared/currency-input"
 import {
   InvoicesService,
-  ProducersService,
   FarmsService,
   HarvestsService,
   UnitsService,
@@ -352,7 +351,7 @@ export function InvoiceFormDialog({
               id="producer"
               value={form.producer}
               onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "producer", value: val })}
-              searchFn={ProducersService.search}
+              searchFn={CompaniesService.searchProducers}
               placeholder="Digite o produtor..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.producer}
@@ -461,7 +460,7 @@ export function InvoiceFormDialog({
               id="supplier"
               value={form.supplier}
               onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "supplier", value: val })}
-              searchFn={CompaniesService.search}
+              searchFn={CompaniesService.searchSuppliers}
               placeholder="Digite o fornecedor..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.supplier}
@@ -646,7 +645,7 @@ export function InvoiceFormDialog({
                           created = await HarvestsService.create({ name: quickCreateName.trim() })
                           break
                         case "producer":
-                          created = await ProducersService.create({ name: quickCreateName.trim() })
+                          created = await CompaniesService.create({ name: quickCreateName.trim(), producer: true })
                           break
                         case "farm":
                           created = await FarmsService.create({ name: quickCreateName.trim() })
@@ -658,7 +657,7 @@ export function InvoiceFormDialog({
                           created = await InvoiceTypesService.create({ name: quickCreateName.trim() })
                           break
                         case "supplier":
-                          created = await CompaniesService.create({ name: quickCreateName.trim() })
+                          created = await CompaniesService.create({ name: quickCreateName.trim(), supplier: true })
                           break
                         case "product":
                           created = await ProductsService.create({ name: quickCreateName.trim() })
