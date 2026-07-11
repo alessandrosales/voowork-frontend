@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, PlusIcon } from "lucide-react"
 
 import { cn } from "~/lib/utils"
+import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import {
   Command,
@@ -31,6 +32,8 @@ interface CreatableInputProps<T extends { id: string; name: string }> {
   disabled?: boolean
   id?: string
   ariaInvalid?: boolean
+  /** Quando fornecido, exibe um botão + para adicionar novo registro */
+  onAdd?: () => void
 }
 
 /* ---------- Component ---------- */
@@ -43,6 +46,7 @@ export function CreatableInput<T extends { id: string; name: string }>({
   disabled = false,
   id,
   ariaInvalid,
+  onAdd,
 }: CreatableInputProps<T>) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [results, setResults] = React.useState<T[]>([])
@@ -99,15 +103,34 @@ export function CreatableInput<T extends { id: string; name: string }>({
 
   return (
     <div ref={containerRef} className="relative">
-      <Input
-        id={id}
-        value={value.name}
-        onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
-        placeholder={placeholder}
-        disabled={disabled}
-        aria-invalid={ariaInvalid}
-      />
+      <div className="flex items-center gap-1">
+        <Input
+          id={id}
+          value={value.name}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={ariaInvalid}
+          className="flex-1"
+        />
+        {onAdd && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAdd()
+            }}
+            disabled={disabled}
+            aria-label="Adicionar novo"
+          >
+            <PlusIcon className="size-4" />
+          </Button>
+        )}
+      </div>
       {showDropdown && (
         <div className="absolute z-50 mt-1 w-full rounded-lg border bg-popover text-popover-foreground shadow-md">
           <Command shouldFilter={false}>

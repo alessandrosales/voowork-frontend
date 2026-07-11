@@ -138,30 +138,30 @@ interface FormErrors {
 function validateForm(state: InvoiceFormState): FormErrors | null {
   const errors: FormErrors = {}
 
-  // Campos relacionais obrigatórios
-  if (!state.harvest.name.trim()) {
-    errors.harvest = "Safra é obrigatória."
+  // Campos relacionais obrigatórios (devem ter um ID selecionado ou criado via overlay)
+  if (!state.harvest.selectedId) {
+    errors.harvest = "Safra é obrigatória. Selecione ou crie uma."
   }
-  if (!state.producer.name.trim()) {
-    errors.producer = "Produtor é obrigatório."
+  if (!state.producer.selectedId) {
+    errors.producer = "Produtor é obrigatório. Selecione ou crie um."
   }
-  if (!state.farm.name.trim()) {
-    errors.farm = "Fazenda é obrigatória."
+  if (!state.farm.selectedId) {
+    errors.farm = "Fazenda é obrigatória. Selecione ou crie uma."
   }
-  if (!state.company.name.trim()) {
-    errors.company = "Empresa é obrigatória."
+  if (!state.company.selectedId) {
+    errors.company = "Empresa é obrigatória. Selecione ou crie uma."
   }
-  if (!state.invoiceType.name.trim()) {
-    errors.invoiceType = "Tipo é obrigatório."
+  if (!state.invoiceType.selectedId) {
+    errors.invoiceType = "Tipo é obrigatório. Selecione ou crie um."
   }
-  if (!state.supplier.name.trim()) {
-    errors.supplier = "Fornecedor é obrigatório."
+  if (!state.supplier.selectedId) {
+    errors.supplier = "Fornecedor é obrigatório. Selecione ou crie um."
   }
-  if (!state.product.name.trim()) {
-    errors.product = "Produto é obrigatório."
+  if (!state.product.selectedId) {
+    errors.product = "Produto é obrigatório. Selecione ou crie um."
   }
-  if (!state.unit.name.trim()) {
-    errors.unit = "Unidade é obrigatória."
+  if (!state.unit.selectedId) {
+    errors.unit = "Unidade é obrigatória. Selecione ou crie uma."
   }
 
   // Campos diretos obrigatórios
@@ -208,6 +208,12 @@ export function InvoiceFormDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [formError, setFormError] = React.useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = React.useState<FormErrors | null>(null)
+  const [quickCreateOpen, setQuickCreateOpen] = React.useState(false)
+  const [quickCreateField, setQuickCreateField] = React.useState<
+    "harvest" | "producer" | "farm" | "company" | "invoiceType" | "supplier" | "product" | "unit" | null
+  >(null)
+  const [quickCreateName, setQuickCreateName] = React.useState("")
+  const [quickCreateLoading, setQuickCreateLoading] = React.useState(false)
 
   /* ---------- Reset ---------- */
 
@@ -233,17 +239,7 @@ export function InvoiceFormDialog({
     }
   }, [open, editingInvoice, resetForm])
 
-  /* ---------- Ensure + Save ---------- */
-
-  const ensure = async <T extends { id: string }>(
-    field: CreatableField,
-    createFn: (data: { name: string }) => Promise<T>,
-  ): Promise<string> => {
-    if (field.selectedId) return field.selectedId
-    if (!field.name.trim()) return ""
-    const created = await createFn({ name: field.name })
-    return created.id
-  }
+  /* ---------- Save ---------- */
 
   const handleSave = async () => {
     setFormError(null)
@@ -259,37 +255,17 @@ export function InvoiceFormDialog({
     setIsSubmitting(true)
 
     try {
-      const [
-        producerId,
-        farmId,
-        harvestId,
-        unitId,
-        productId,
-        companyId,
-        invoiceTypeId,
-        supplierId,
-      ] = await Promise.all([
-        ensure(form.producer, ProducersService.create),
-        ensure(form.farm, FarmsService.create),
-        ensure(form.harvest, HarvestsService.create),
-        ensure(form.unit, UnitsService.create),
-        ensure(form.product, ProductsService.create),
-        ensure(form.company, CompaniesService.create),
-        ensure(form.invoiceType, InvoiceTypesService.create),
-        ensure(form.supplier, CompaniesService.create),
-      ])
-
       const payload: Record<string, unknown> = {
         number: form.notaFiscal,
         date: form.dataNF,
-        harvest_id: harvestId || null,
-        producer_id: producerId || null,
-        farm_id: farmId || null,
-        company_id: companyId || null,
-        type_id: invoiceTypeId || null,
-        supplier_id: supplierId || null,
-        product_id: productId || null,
-        unit_id: unitId || null,
+        harvest_id: form.harvest.selectedId,
+        producer_id: form.producer.selectedId,
+        farm_id: form.farm.selectedId,
+        company_id: form.company.selectedId,
+        type_id: form.invoiceType.selectedId,
+        supplier_id: form.supplier.selectedId,
+        product_id: form.product.selectedId,
+        unit_id: form.unit.selectedId,
         quantity: Number(form.quantidade) || 0,
         unit_price: Number(form.precoUnitario) || 0,
         total_value: Number(form.valorTotal) || 0,
@@ -362,6 +338,11 @@ export function InvoiceFormDialog({
               placeholder="Digite a safra..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.harvest}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("harvest")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.harvest && <FieldError>{fieldErrors.harvest}</FieldError>}
           </Field>
@@ -375,6 +356,11 @@ export function InvoiceFormDialog({
               placeholder="Digite o produtor..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.producer}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("producer")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.producer && <FieldError>{fieldErrors.producer}</FieldError>}
           </Field>
@@ -388,6 +374,11 @@ export function InvoiceFormDialog({
               placeholder="Digite a fazenda..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.farm}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("farm")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.farm && <FieldError>{fieldErrors.farm}</FieldError>}
           </Field>
@@ -411,6 +402,11 @@ export function InvoiceFormDialog({
               placeholder="Digite a empresa..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.company}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("company")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.company && <FieldError>{fieldErrors.company}</FieldError>}
           </Field>
@@ -424,6 +420,11 @@ export function InvoiceFormDialog({
               placeholder="Digite o tipo..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.invoiceType}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("invoiceType")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.invoiceType && <FieldError>{fieldErrors.invoiceType}</FieldError>}
           </Field>
@@ -464,6 +465,11 @@ export function InvoiceFormDialog({
               placeholder="Digite o fornecedor..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.supplier}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("supplier")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.supplier && <FieldError>{fieldErrors.supplier}</FieldError>}
           </Field>
@@ -477,6 +483,11 @@ export function InvoiceFormDialog({
               placeholder="Digite o produto..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.product}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("product")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.product && <FieldError>{fieldErrors.product}</FieldError>}
           </Field>
@@ -490,6 +501,11 @@ export function InvoiceFormDialog({
               placeholder="Digite a unidade..."
               disabled={isSubmitting}
               ariaInvalid={!!fieldErrors?.unit}
+              onAdd={() => {
+                setQuickCreateName("")
+                setQuickCreateField("unit")
+                setQuickCreateOpen(true)
+              }}
             />
             {fieldErrors?.unit && <FieldError>{fieldErrors.unit}</FieldError>}
           </Field>
@@ -575,6 +591,108 @@ export function InvoiceFormDialog({
           </Field>
           </div>
         </FieldGroup>
+
+        {/* Overlay de criação rápida */}
+        {quickCreateOpen && quickCreateField && (
+          <div className="absolute inset-0 z-50 flex items-start justify-center bg-background/80 pt-12">
+            <div className="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg">
+              <h3 className="mb-1 text-lg font-semibold">
+                {quickCreateField === "harvest" && "Nova Safra"}
+                {quickCreateField === "producer" && "Novo Produtor"}
+                {quickCreateField === "farm" && "Nova Fazenda"}
+                {quickCreateField === "company" && "Nova Empresa"}
+                {quickCreateField === "invoiceType" && "Novo Tipo"}
+                {quickCreateField === "supplier" && "Novo Fornecedor"}
+                {quickCreateField === "product" && "Novo Produto"}
+                {quickCreateField === "unit" && "Nova Unidade"}
+              </h3>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Digite o nome para adicioná-lo.
+              </p>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="quickCreateName">Nome</FieldLabel>
+                  <Input
+                    id="quickCreateName"
+                    value={quickCreateName}
+                    onChange={(e) => setQuickCreateName(e.target.value)}
+                    placeholder="Digite o nome..."
+                    disabled={quickCreateLoading}
+                    autoFocus
+                  />
+                </Field>
+              </FieldGroup>
+              <div className="mt-6 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuickCreateOpen(false)
+                    setQuickCreateName("")
+                    setQuickCreateField(null)
+                  }}
+                  disabled={quickCreateLoading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={!quickCreateName.trim() || quickCreateLoading}
+                  onClick={async () => {
+                    if (!quickCreateName.trim() || !quickCreateField) return
+                    setQuickCreateLoading(true)
+                    try {
+                      let created: { id: string; name: string }
+                      switch (quickCreateField) {
+                        case "harvest":
+                          created = await HarvestsService.create({ name: quickCreateName.trim() })
+                          break
+                        case "producer":
+                          created = await ProducersService.create({ name: quickCreateName.trim() })
+                          break
+                        case "farm":
+                          created = await FarmsService.create({ name: quickCreateName.trim() })
+                          break
+                        case "company":
+                          created = await CompaniesService.create({ name: quickCreateName.trim() })
+                          break
+                        case "invoiceType":
+                          created = await InvoiceTypesService.create({ name: quickCreateName.trim() })
+                          break
+                        case "supplier":
+                          created = await CompaniesService.create({ name: quickCreateName.trim() })
+                          break
+                        case "product":
+                          created = await ProductsService.create({ name: quickCreateName.trim() })
+                          break
+                        case "unit":
+                          created = await UnitsService.create({ name: quickCreateName.trim() })
+                          break
+                      }
+                      dispatch({
+                        type: "SET_CREATABLE",
+                        field: quickCreateField,
+                        value: { name: created.name, selectedId: created.id },
+                      })
+                      toast.success(`${created.name} adicionado com sucesso.`)
+                      setQuickCreateOpen(false)
+                      setQuickCreateName("")
+                      setQuickCreateField(null)
+                    } catch (err) {
+                      if (err instanceof ApiError) {
+                        toast.error(err.message || "Erro ao criar.")
+                      } else {
+                        toast.error("Erro de conexão.")
+                      }
+                    } finally {
+                      setQuickCreateLoading(false)
+                    }
+                  }}
+                >
+                  {quickCreateLoading ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button
