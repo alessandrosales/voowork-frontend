@@ -114,6 +114,114 @@ export interface ChangePasswordResponse {
   user: User
 }
 
+/* ---------- Producer ---------- */
+export interface Producer {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Farm ---------- */
+export interface Farm {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Harvest ---------- */
+export interface Harvest {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Unit ---------- */
+export interface Unit {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Product ---------- */
+export interface Product {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Company ---------- */
+export interface Company {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- InvoiceType ---------- */
+export interface InvoiceType {
+  id: string
+  account_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Invoice ---------- */
+export interface Invoice {
+  id: string
+  account_id: string
+  harvest_id: string
+  producer_id: string
+  farm_id: string
+  number: string
+  date: string
+  supplier_id: string
+  product_id: string
+  unit_id: string
+  quantity: number
+  unit_price: number
+  total_value: number
+  origin_invoice_number: string | null
+  company_id: string
+  type_id: string
+  delivery: string | null
+  notes: string | null
+  harvest_name?: string
+  producer_name?: string
+  farm_name?: string
+  company_name?: string
+  type_name?: string
+  supplier_name?: string
+  product_name?: string
+  unit_name?: string
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Pagination ---------- */
+export interface PaginationMeta {
+  page: number
+  per_page: number
+  total_count: number
+  total_pages: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  meta: PaginationMeta
+}
+
 /* ---------- Common ---------- */
 export interface ApiErrorBody {
   errors: Record<string, string[]>
