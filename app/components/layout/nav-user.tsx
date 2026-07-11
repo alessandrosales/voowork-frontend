@@ -18,7 +18,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/components/ui/sidebar"
-import * as React from "react"
 import { useNavigate } from "react-router"
 import { useTheme } from "~/components/shared/theme-provider"
 import { useAuth } from "~/hooks/use-auth"
@@ -50,14 +49,9 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { theme, setTheme } = useTheme()
+  const { setTheme } = useTheme()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
 
   return (
     <SidebarMenu>
@@ -107,8 +101,13 @@ export function NavUser({
                 <CircleUserRoundIcon />
                 Meus Dados
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                {!mounted || theme === "dark" ? (
+              <DropdownMenuItem
+                onSelect={() => {
+                  const isDark = document.documentElement.classList.contains("dark")
+                  setTheme(isDark ? "light" : "dark")
+                }}
+              >
+                {document.documentElement.classList.contains("dark") ? (
                   <>
                     <SunIcon />
                     Light Mode
