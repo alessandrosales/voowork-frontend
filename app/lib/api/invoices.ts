@@ -4,13 +4,18 @@
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { Invoice } from "./types"
+import type { Invoice, PaginatedResponse } from "./types"
 
 const INVOICES_PATH = "/api/v1/invoices"
 
 export const InvoicesService = {
-  async list(): Promise<Invoice[]> {
-    return apiGet<Invoice[]>(INVOICES_PATH)
+  async list(page = 1, perPage = 25, q?: string): Promise<PaginatedResponse<Invoice>> {
+    const params: Record<string, string> = {
+      page: String(page),
+      per_page: String(perPage),
+    }
+    if (q && q.trim()) params.q = q.trim()
+    return apiGet<PaginatedResponse<Invoice>>(INVOICES_PATH, params)
   },
 
   async get(id: string): Promise<Invoice> {

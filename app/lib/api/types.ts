@@ -197,8 +197,29 @@ export interface Invoice {
   type_id: string
   delivery: string | null
   notes: string | null
+  harvest_name?: string
+  producer_name?: string
+  farm_name?: string
+  company_name?: string
+  type_name?: string
+  supplier_name?: string
+  product_name?: string
+  unit_name?: string
   created_at: string
   updated_at: string
+}
+
+/* ---------- Pagination ---------- */
+export interface PaginationMeta {
+  page: number
+  per_page: number
+  total_count: number
+  total_pages: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  meta: PaginationMeta
 }
 
 /* ---------- Common ---------- */

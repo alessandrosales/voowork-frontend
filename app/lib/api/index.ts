@@ -24,6 +24,8 @@ export type {
   Company,
   InvoiceType,
   Invoice,
+  PaginationMeta,
+  PaginatedResponse,
   LoginRequest,
   LoginResponse,
   RegisterRequest,

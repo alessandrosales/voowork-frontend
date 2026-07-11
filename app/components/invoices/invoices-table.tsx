@@ -4,12 +4,9 @@ import * as React from "react"
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
@@ -28,7 +25,6 @@ import { Input } from "~/components/ui/input"
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -43,19 +39,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "~/components/ui/field"
 import {
   Table,
   TableBody,
@@ -74,21 +57,7 @@ import {
   SearchIcon,
 } from "lucide-react"
 
-import {
-  CreatableInput,
-  type CreatableField,
-} from "~/components/shared/creatable-input"
-import {
-  InvoicesService,
-  ProducersService,
-  FarmsService,
-  HarvestsService,
-  UnitsService,
-  ProductsService,
-  CompaniesService,
-  InvoiceTypesService,
-  ApiError,
-} from "~/lib/api"
+import { InvoiceFormDialog } from "~/components/invoices/invoice-form-dialog"
 
 export const schema = z.object({
   id: z.string(),
@@ -126,20 +95,35 @@ function toNumberBR(value: number, decimals = 2) {
 
 export function InvoicesTable({
   data: initialData,
+  page,
+  perPage,
+  totalPages,
+  totalCount,
+  searchQuery,
+  onSearchChange,
+  isLoading,
+  onPageChange,
+  onPageSizeChange,
+  onSaved,
 }: {
   data: z.infer<typeof schema>[]
+  page: number
+  perPage: number
+  totalPages: number
+  totalCount: number
+  searchQuery: string
+  onSearchChange: (value: string) => void
+  isLoading: boolean
+  onPageChange: (page: number) => void
+  onPageSizeChange: (pageSize: number) => void
+  onSaved: () => void
 }) {
   const [data, setData] = React.useState(() => initialData)
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  React.useEffect(() => {
+    setData(initialData)
+  }, [initialData])
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
 
-  const [safraFilter, setSafraFilter] = React.useState<string>("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [invoiceToDelete, setInvoiceToDelete] =
     React.useState<z.infer<typeof schema> | null>(null)
@@ -147,166 +131,22 @@ export function InvoicesTable({
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingInvoice, setEditingInvoice] =
     React.useState<z.infer<typeof schema> | null>(null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [formError, setFormError] = React.useState<string | null>(null)
 
-  // Relational fields — CreatableField: { name, selectedId }
-  const [formHarvest, setFormHarvest] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formProducer, setFormProducer] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formFarm, setFormFarm] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formCompany, setFormCompany] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formInvoiceType, setFormInvoiceType] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formSupplier, setFormSupplier] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formProduct, setFormProduct] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formUnit, setFormUnit] = React.useState<CreatableField>({ name: "", selectedId: null })
-  const [formOriginInvoice, setFormOriginInvoice] = React.useState<CreatableField>({ name: "", selectedId: null })
-
-  // Direct fields
-  const [formNotaFiscal, setFormNotaFiscal] = React.useState("")
-  const [formDataNF, setFormDataNF] = React.useState("")
-  const [formQuantidade, setFormQuantidade] = React.useState("")
-  const [formPrecoUnitario, setFormPrecoUnitario] = React.useState("")
-  const [formValorTotal, setFormValorTotal] = React.useState("")
-  const [formEntrega, setFormEntrega] = React.useState("")
-  const [formObservacoes, setFormObservacoes] = React.useState("")
-
-  const resetForm = () => {
+  const handleFormSaved = React.useCallback(() => {
+    setFormDialogOpen(false)
     setEditingInvoice(null)
-    setFormHarvest({ name: "", selectedId: null })
-    setFormProducer({ name: "", selectedId: null })
-    setFormFarm({ name: "", selectedId: null })
-    setFormCompany({ name: "", selectedId: null })
-    setFormInvoiceType({ name: "", selectedId: null })
-    setFormSupplier({ name: "", selectedId: null })
-    setFormProduct({ name: "", selectedId: null })
-    setFormUnit({ name: "", selectedId: null })
-    setFormOriginInvoice({ name: "", selectedId: null })
-    setFormNotaFiscal("")
-    setFormDataNF("")
-    setFormQuantidade("")
-    setFormPrecoUnitario("")
-    setFormValorTotal("")
-    setFormEntrega("")
-    setFormObservacoes("")
-    setFormError(null)
-    setIsSubmitting(false)
-  }
+    onSaved()
+  }, [onSaved])
 
-  const openCreateDialog = () => {
-    resetForm()
-    setFormDialogOpen(true)
-  }
-
-  const openEditDialog = (invoice: z.infer<typeof schema>) => {
-    setEditingInvoice(invoice)
-    // Relational fields — populate from display data
-    setFormHarvest({ name: invoice.safra, selectedId: null })
-    setFormProducer({ name: invoice.produtor, selectedId: null })
-    setFormFarm({ name: invoice.fazenda, selectedId: null })
-    setFormCompany({ name: invoice.empresa, selectedId: null })
-    setFormInvoiceType({ name: invoice.tipo, selectedId: null })
-    setFormSupplier({ name: invoice.fornecedor, selectedId: null })
-    setFormProduct({ name: invoice.produto, selectedId: null })
-    setFormUnit({ name: invoice.unidade, selectedId: null })
-    setFormOriginInvoice({ name: invoice.nfOrigem, selectedId: null })
-    // Direct fields
-    setFormNotaFiscal(invoice.notaFiscal)
-    setFormDataNF(invoice.dataNF)
-    setFormQuantidade(String(invoice.quantidade))
-    setFormPrecoUnitario(String(invoice.precoUnitario))
-    setFormValorTotal(String(invoice.valorTotal))
-    setFormEntrega(invoice.entrega)
-    setFormObservacoes(invoice.observacoes)
-    setFormError(null)
-    setIsSubmitting(false)
-    setFormDialogOpen(true)
-  }
-
-  /**
-   * Ensures a resource exists: if selectedId is set, uses it;
-   * otherwise creates a new record with the typed name.
-   */
-  const ensure = async <T extends { id: string }>(
-    field: CreatableField,
-    createFn: (data: { name: string }) => Promise<T>,
-  ): Promise<string> => {
-    if (field.selectedId) return field.selectedId
-    if (!field.name.trim()) return ""
-    const created = await createFn({ name: field.name })
-    return created.id
-  }
-
-  const handleSave = async () => {
-    setFormError(null)
-    setIsSubmitting(true)
-
-    try {
-      // Auto-cria registros não selecionados (todos independentes)
-      const [producerId, farmId, harvestId, unitId, productId, companyId, invoiceTypeId, supplierId] =
-        await Promise.all([
-          ensure(formProducer, ProducersService.create),
-          ensure(formFarm, FarmsService.create),
-          ensure(formHarvest, HarvestsService.create),
-          ensure(formUnit, UnitsService.create),
-          ensure(formProduct, ProductsService.create),
-          ensure(formCompany, CompaniesService.create),
-          ensure(formInvoiceType, InvoiceTypesService.create),
-          ensure(formSupplier, CompaniesService.create),
-        ])
-
-      const payload: Record<string, unknown> = {
-        number: formNotaFiscal,
-        date: formDataNF,
-        harvest_id: harvestId,
-        producer_id: producerId,
-        farm_id: farmId,
-        company_id: companyId,
-        type_id: invoiceTypeId,
-        supplier_id: supplierId,
-        product_id: productId,
-        unit_id: unitId,
-        quantity: Number(formQuantidade) || 0,
-        unit_price: Number(formPrecoUnitario) || 0,
-        total_value: Number(formValorTotal) || 0,
-        ...(formEntrega ? { delivery: formEntrega } : {}),
-        ...(formObservacoes ? { notes: formObservacoes } : {}),
-      }
-
-      if (editingInvoice) {
-        await InvoicesService.update(editingInvoice.id, payload)
-        toast.success("Nota fiscal atualizada com sucesso.")
-      } else {
-        await InvoicesService.create(payload as Parameters<typeof InvoicesService.create>[0])
-        toast.success("Nota fiscal criada com sucesso.")
-      }
-      setFormDialogOpen(false)
-      resetForm()
-    } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.errors) {
-          const msgs = Object.values(err.errors).flat()
-          setFormError(msgs.join(". "))
-        } else {
-          setFormError(err.message)
-        }
-      } else {
-        setFormError("Erro de conexão.")
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const searchInputRef = React.useRef<HTMLInputElement>(null)
+  const prevIsLoadingRef = React.useRef(isLoading)
 
   React.useEffect(() => {
-    if (safraFilter === "all") {
-      setColumnFilters((prev) => prev.filter((f) => f.id !== "safra"))
-    } else {
-      setColumnFilters((prev) => {
-        const others = prev.filter((f) => f.id !== "safra")
-        return [...others, { id: "safra", value: safraFilter }]
-      })
+    if (prevIsLoadingRef.current && !isLoading && searchInputRef.current) {
+      searchInputRef.current.focus()
     }
-  }, [safraFilter])
+    prevIsLoadingRef.current = isLoading
+  }, [isLoading])
 
   const columns = React.useMemo<ColumnDef<z.infer<typeof schema>>[]>(
     () => [
@@ -327,7 +167,10 @@ export function InvoicesTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem
-                onClick={() => openEditDialog(row.original)}
+                onClick={() => {
+                  setEditingInvoice(row.original)
+                  setFormDialogOpen(true)
+                }}
               >
                 Editar
               </DropdownMenuItem>
@@ -346,6 +189,70 @@ export function InvoicesTable({
         ),
         enableSorting: false,
         enableHiding: false,
+      },
+      {
+        accessorKey: "notaFiscal",
+        header: "NF",
+        cell: ({ row }) => (
+          <div className="font-mono text-sm whitespace-nowrap">{row.original.notaFiscal}</div>
+        ),
+      },
+      {
+        accessorKey: "dataNF",
+        header: "Data",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground whitespace-nowrap">
+            {new Date(row.original.dataNF).toLocaleDateString("pt-BR")}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "fornecedor",
+        header: "Fornecedor",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground whitespace-nowrap">{row.original.fornecedor}</div>
+        ),
+      },
+      {
+        accessorKey: "produto",
+        header: "Produto",
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap">{row.original.produto}</div>
+        ),
+      },
+      {
+        accessorKey: "quantidade",
+        header: "Quant.",
+        cell: ({ row }) => (
+          <div className="tabular-nums whitespace-nowrap">
+            {toNumberBR(row.original.quantidade)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "unidade",
+        header: "Un.",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground whitespace-nowrap">{row.original.unidade}</div>
+        ),
+      },
+      {
+        accessorKey: "precoUnitario",
+        header: "Preço Un.",
+        cell: ({ row }) => (
+          <div className="tabular-nums whitespace-nowrap">
+            {toBRL(row.original.precoUnitario)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "valorTotal",
+        header: "Valor Total",
+        cell: ({ row }) => (
+          <div className="font-medium tabular-nums whitespace-nowrap">
+            {toBRL(row.original.valorTotal)}
+          </div>
+        ),
       },
       {
         accessorKey: "safra",
@@ -371,77 +278,6 @@ export function InvoicesTable({
         ),
       },
       {
-        accessorKey: "notaFiscal",
-        header: "NF",
-        cell: ({ row }) => (
-          <div className="font-mono text-sm whitespace-nowrap">{row.original.notaFiscal}</div>
-        ),
-      },
-      {
-        accessorKey: "dataNF",
-        header: () => <div className="w-full text-right">Data</div>,
-        cell: ({ row }) => (
-          <div className="text-right text-muted-foreground whitespace-nowrap">
-            {new Date(row.original.dataNF).toLocaleDateString("pt-BR")}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "fornecedor",
-        header: "Fornecedor",
-        cell: ({ row }) => (
-          <div className="text-muted-foreground whitespace-nowrap">{row.original.fornecedor}</div>
-        ),
-      },
-      {
-        accessorKey: "produto",
-        header: "Produto",
-        cell: ({ row }) => (
-          <div className="whitespace-nowrap">{row.original.produto}</div>
-        ),
-      },
-      {
-        accessorKey: "unidade",
-        header: () => <div className="w-full text-center">Un.</div>,
-        cell: ({ row }) => (
-          <div className="text-center text-muted-foreground whitespace-nowrap">{row.original.unidade}</div>
-        ),
-      },
-      {
-        accessorKey: "quantidade",
-        header: () => <div className="w-full text-right">Quant.</div>,
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums whitespace-nowrap">
-            {toNumberBR(row.original.quantidade)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "precoUnitario",
-        header: () => <div className="w-full text-right">Preço Un.</div>,
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums whitespace-nowrap">
-            {toBRL(row.original.precoUnitario)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "valorTotal",
-        header: () => <div className="w-full text-right">Valor Total</div>,
-        cell: ({ row }) => (
-          <div className="text-right font-medium tabular-nums whitespace-nowrap">
-            {toBRL(row.original.valorTotal)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "nfOrigem",
-        header: "NF Origem",
-        cell: ({ row }) => (
-          <div className="text-muted-foreground whitespace-nowrap">{row.original.nfOrigem || "—"}</div>
-        ),
-      },
-      {
         accessorKey: "empresa",
         header: "Empresa",
         cell: ({ row }) => (
@@ -453,6 +289,13 @@ export function InvoicesTable({
         header: "Tipo",
         cell: ({ row }) => (
           <div className="text-muted-foreground whitespace-nowrap">{row.original.tipo || "—"}</div>
+        ),
+      },
+      {
+        accessorKey: "nfOrigem",
+        header: "NF Origem",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground whitespace-nowrap">{row.original.nfOrigem || "—"}</div>
         ),
       },
       {
@@ -478,16 +321,10 @@ export function InvoicesTable({
     columns,
     state: {
       sorting,
-      columnFilters,
-      pagination,
     },
     getRowId: (row) => row.id.toString(),
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   })
 
@@ -499,29 +336,19 @@ export function InvoicesTable({
             <div className="relative">
               <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar notas fiscais..."
-                value={(table.getColumn("produtor")?.getFilterValue() as string) ?? ""}
-                onChange={(event) =>
-                  table.getColumn("produtor")?.setFilterValue(event.target.value)
-                }
-                className="pl-8 w-64 h-8"
+                ref={searchInputRef}
+                placeholder="Buscar por número, produtor, fornecedor, produto..."
+                value={searchQuery}
+                onChange={(event) => onSearchChange(event.target.value)}
+                className="pl-8 w-96 h-8"
               />
             </div>
-            <Select value={safraFilter} onValueChange={setSafraFilter}>
-              <SelectTrigger className="w-44 !h-8">
-                <SelectValue placeholder="Filtrar por safra" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Todas as safras</SelectItem>
-                  <SelectItem value="SOJA 24/25">SOJA 24/25</SelectItem>
-                  <SelectItem value="MILHO 23/24">MILHO 23/24</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="lg" onClick={openCreateDialog}>
+            <Button size="lg" onClick={() => {
+              setEditingInvoice(null)
+              setFormDialogOpen(true)
+            }}>
               <PlusIcon />
               <span className="hidden lg:inline">Nova Nota Fiscal</span>
             </Button>
@@ -529,7 +356,7 @@ export function InvoicesTable({
         </div>
       </div>
 
-      <div className="overflow-auto px-4 lg:px-6">
+      <div className="overflow-auto px-4 lg:px-6 relative">
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader className="bg-muted">
@@ -586,31 +413,35 @@ export function InvoicesTable({
               )}
             </TableBody>
           </Table>
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <div className="size-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span className="text-sm">Carregando...</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="text-sm">
-            {table.getFilteredRowModel().rows.length} registro(s)
-          </span>
+          <span className="text-sm">{totalCount} registro(s)</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Linhas por página</span>
             <Select
-              value={`${table.getState().pagination.pageSize}`}
+              value={`${perPage}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                onPageSizeChange(Number(value))
               }}
             >
               <SelectTrigger className="w-16" size="sm">
-                <SelectValue
-                  placeholder={table.getState().pagination.pageSize}
-                />
+                <SelectValue placeholder="25" />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
+                {[10, 25, 50, 100].map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>
                     {pageSize}
                   </SelectItem>
@@ -620,8 +451,7 @@ export function InvoicesTable({
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
-              {table.getPageCount()}
+              Página {page} de {totalPages}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -629,8 +459,8 @@ export function InvoicesTable({
               variant="outline"
               className="hidden size-8 lg:flex"
               size="icon"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => onPageChange(1)}
+              disabled={page <= 1}
             >
               <ChevronsLeftIcon />
               <span className="sr-only">Primeira página</span>
@@ -639,8 +469,8 @@ export function InvoicesTable({
               variant="outline"
               className="size-8"
               size="icon"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
             >
               <ChevronLeftIcon />
               <span className="sr-only">Página anterior</span>
@@ -649,8 +479,8 @@ export function InvoicesTable({
               variant="outline"
               className="size-8"
               size="icon"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
             >
               <ChevronRightIcon />
               <span className="sr-only">Próxima página</span>
@@ -659,8 +489,8 @@ export function InvoicesTable({
               variant="outline"
               className="hidden size-8 lg:flex"
               size="icon"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
+              onClick={() => onPageChange(totalPages)}
+              disabled={page >= totalPages}
             >
               <ChevronsRightIcon />
               <span className="sr-only">Última página</span>
@@ -669,209 +499,17 @@ export function InvoicesTable({
         </div>
       </div>
 
-      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle>
-              {editingInvoice ? "Editar Nota Fiscal" : "Nova Nota Fiscal"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingInvoice
-                ? "Altere os dados da nota fiscal selecionada."
-                : "Preencha os dados para criar uma nova nota fiscal."}
-            </DialogDescription>
-          </DialogHeader>
-          {formError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {formError}
-            </div>
-          )}
-          <FieldGroup className="grid grid-cols-2 gap-4">
-            <Field>
-              <FieldLabel>Safra</FieldLabel>
-              <CreatableInput
-                value={formHarvest}
-                onChange={setFormHarvest}
-                searchFn={HarvestsService.search}
-                placeholder="Digite a safra..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Produtor</FieldLabel>
-              <CreatableInput
-                value={formProducer}
-                onChange={setFormProducer}
-                searchFn={ProducersService.search}
-                placeholder="Digite o produtor..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Fazenda</FieldLabel>
-              <CreatableInput
-                value={formFarm}
-                onChange={setFormFarm}
-                searchFn={FarmsService.search}
-                placeholder="Digite a fazenda..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="nfOrigem">NF Origem</FieldLabel>
-              <Input
-                id="nfOrigem"
-                value={formOriginInvoice.name}
-                onChange={(e) => setFormOriginInvoice({ name: e.target.value, selectedId: null })}
-                placeholder="Número da NF de origem"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Empresa</FieldLabel>
-              <CreatableInput
-                value={formCompany}
-                onChange={setFormCompany}
-                searchFn={CompaniesService.search}
-                placeholder="Digite a empresa..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Tipo</FieldLabel>
-              <CreatableInput
-                value={formInvoiceType}
-                onChange={setFormInvoiceType}
-                searchFn={InvoiceTypesService.search}
-                placeholder="Digite o tipo..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="notaFiscal">Nota Fiscal</FieldLabel>
-              <Input
-                id="notaFiscal"
-                value={formNotaFiscal}
-                onChange={(e) => setFormNotaFiscal(e.target.value)}
-                placeholder="Número da NF"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="dataNF">Data NF</FieldLabel>
-              <Input
-                id="dataNF"
-                type="date"
-                value={formDataNF}
-                onChange={(e) => setFormDataNF(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field className="col-span-2">
-              <FieldLabel>Fornecedor</FieldLabel>
-              <CreatableInput
-                value={formSupplier}
-                onChange={setFormSupplier}
-                searchFn={CompaniesService.search}
-                placeholder="Digite o fornecedor..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Produto</FieldLabel>
-              <CreatableInput
-                value={formProduct}
-                onChange={setFormProduct}
-                searchFn={ProductsService.search}
-                placeholder="Digite o produto..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Unidade</FieldLabel>
-              <CreatableInput
-                value={formUnit}
-                onChange={setFormUnit}
-                searchFn={UnitsService.search}
-                placeholder="Digite a unidade..."
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="quantidade">Quantidade</FieldLabel>
-              <Input
-                id="quantidade"
-                type="number"
-                step="0.01"
-                value={formQuantidade}
-                onChange={(e) => setFormQuantidade(e.target.value)}
-                placeholder="0,00"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="precoUnitario">Preço Unitário (R$)</FieldLabel>
-              <Input
-                id="precoUnitario"
-                type="number"
-                step="0.01"
-                value={formPrecoUnitario}
-                onChange={(e) => setFormPrecoUnitario(e.target.value)}
-                placeholder="0,00"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="valorTotal">Valor Total (R$)</FieldLabel>
-              <Input
-                id="valorTotal"
-                type="number"
-                step="0.01"
-                value={formValorTotal}
-                onChange={(e) => setFormValorTotal(e.target.value)}
-                placeholder="0,00"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="entrega">Entrega</FieldLabel>
-              <Input
-                id="entrega"
-                value={formEntrega}
-                onChange={(e) => setFormEntrega(e.target.value)}
-                placeholder="Status/data de entrega"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field className="col-span-2">
-              <FieldLabel htmlFor="observacoes">Observações</FieldLabel>
-              <Input
-                id="observacoes"
-                value={formObservacoes}
-                onChange={(e) => setFormObservacoes(e.target.value)}
-                placeholder="Observações adicionais"
-                disabled={isSubmitting}
-              />
-            </Field>
-          </FieldGroup>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setFormDialogOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Salvando..."
-                : editingInvoice
-                  ? "Salvar"
-                  : "Criar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InvoiceFormDialog
+        open={formDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setFormDialogOpen(false)
+            setEditingInvoice(null)
+          }
+        }}
+        editingInvoice={editingInvoice}
+        onSaved={handleFormSaved}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
