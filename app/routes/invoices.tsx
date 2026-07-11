@@ -133,7 +133,7 @@ function mapInvoiceToDisplay(invoice: Invoice): z.infer<typeof schema> {
     safra: invoice.harvest_name ?? invoice.harvest_id,
     produtor: invoice.producer_name ?? invoice.producer_id,
     fazenda: invoice.farm_name ?? invoice.farm_id,
-    nfOrigem: invoice.origin_invoice_id ?? "",
+    nfOrigem: invoice.origin_invoice_number ?? "",
     empresa: invoice.company_name ?? invoice.company_id,
     tipo: invoice.type_name ?? invoice.type_id,
     notaFiscal: invoice.number,
@@ -146,5 +146,13 @@ function mapInvoiceToDisplay(invoice: Invoice): z.infer<typeof schema> {
     valorTotal: invoice.total_value,
     entrega: invoice.delivery ?? "",
     observacoes: invoice.notes ?? "",
+    harvest_id: invoice.harvest_id,
+    producer_id: invoice.producer_id,
+    farm_id: invoice.farm_id,
+    company_id: invoice.company_id,
+    type_id: invoice.type_id,
+    supplier_id: invoice.supplier_id,
+    product_id: invoice.product_id,
+    unit_id: invoice.unit_id,
   }
 }

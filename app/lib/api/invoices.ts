@@ -36,7 +36,7 @@ export const InvoicesService = {
     total_value: number
     company_id: string
     type_id: string
-    origin_invoice_id?: string | null
+    origin_invoice_number?: string | null
     delivery?: string
     notes?: string
   }): Promise<Invoice> {
@@ -59,7 +59,7 @@ export const InvoicesService = {
       unit_id: string
       company_id: string
       type_id: string
-      origin_invoice_id: string | null
+      origin_invoice_number: string | null
       delivery: string
       notes: string
     }>,

@@ -192,7 +192,7 @@ export interface Invoice {
   quantity: number
   unit_price: number
   total_value: number
-  origin_invoice_id: string | null
+  origin_invoice_number: string | null
   company_id: string
   type_id: string
   delivery: string | null

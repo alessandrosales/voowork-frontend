@@ -87,8 +87,7 @@ export function InvoiceFormDialog({
     name: "",
     selectedId: null,
   })
-  const [formOriginInvoice, setFormOriginInvoice] =
-    React.useState<CreatableField>({ name: "", selectedId: null })
+  const [formOriginInvoice, setFormOriginInvoice] = React.useState("")
 
   // Direct fields
   const [formNotaFiscal, setFormNotaFiscal] = React.useState("")
@@ -110,7 +109,7 @@ export function InvoiceFormDialog({
     setFormSupplier({ name: "", selectedId: null })
     setFormProduct({ name: "", selectedId: null })
     setFormUnit({ name: "", selectedId: null })
-    setFormOriginInvoice({ name: "", selectedId: null })
+    setFormOriginInvoice("")
     setFormNotaFiscal("")
     setFormDataNF("")
     setFormQuantidade("")
@@ -128,18 +127,15 @@ export function InvoiceFormDialog({
     if (!open) return
 
     if (editingInvoice) {
-      setFormHarvest({ name: editingInvoice.safra, selectedId: null })
-      setFormProducer({ name: editingInvoice.produtor, selectedId: null })
-      setFormFarm({ name: editingInvoice.fazenda, selectedId: null })
-      setFormCompany({ name: editingInvoice.empresa, selectedId: null })
-      setFormInvoiceType({ name: editingInvoice.tipo, selectedId: null })
-      setFormSupplier({ name: editingInvoice.fornecedor, selectedId: null })
-      setFormProduct({ name: editingInvoice.produto, selectedId: null })
-      setFormUnit({ name: editingInvoice.unidade, selectedId: null })
-      setFormOriginInvoice({
-        name: editingInvoice.nfOrigem,
-        selectedId: null,
-      })
+      setFormHarvest({ name: editingInvoice.safra, selectedId: editingInvoice.harvest_id })
+      setFormProducer({ name: editingInvoice.produtor, selectedId: editingInvoice.producer_id })
+      setFormFarm({ name: editingInvoice.fazenda, selectedId: editingInvoice.farm_id })
+      setFormCompany({ name: editingInvoice.empresa, selectedId: editingInvoice.company_id })
+      setFormInvoiceType({ name: editingInvoice.tipo, selectedId: editingInvoice.type_id })
+      setFormSupplier({ name: editingInvoice.fornecedor, selectedId: editingInvoice.supplier_id })
+      setFormProduct({ name: editingInvoice.produto, selectedId: editingInvoice.product_id })
+      setFormUnit({ name: editingInvoice.unidade, selectedId: editingInvoice.unit_id })
+      setFormOriginInvoice(editingInvoice.nfOrigem)
       setFormNotaFiscal(editingInvoice.notaFiscal)
       setFormDataNF(editingInvoice.dataNF)
       setFormQuantidade(String(editingInvoice.quantidade))
@@ -205,6 +201,7 @@ export function InvoiceFormDialog({
         quantity: Number(formQuantidade) || 0,
         unit_price: Number(formPrecoUnitario) || 0,
         total_value: Number(formValorTotal) || 0,
+        origin_invoice_number: formOriginInvoice || null,
         ...(formEntrega ? { delivery: formEntrega } : {}),
         ...(formObservacoes ? { notes: formObservacoes } : {}),
       }
@@ -296,13 +293,8 @@ export function InvoiceFormDialog({
             <FieldLabel htmlFor="nfOrigem">NF Origem</FieldLabel>
             <Input
               id="nfOrigem"
-              value={formOriginInvoice.name}
-              onChange={(e) =>
-                setFormOriginInvoice({
-                  name: e.target.value,
-                  selectedId: null,
-                })
-              }
+              value={formOriginInvoice}
+              onChange={(e) => setFormOriginInvoice(e.target.value)}
               placeholder="Número da NF de origem"
               disabled={isSubmitting}
             />

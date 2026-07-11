@@ -58,6 +58,7 @@ import {
 } from "lucide-react"
 
 import { InvoiceFormDialog } from "~/components/invoices/invoice-form-dialog"
+import { InvoicesService, ApiError } from "~/lib/api"
 
 export const schema = z.object({
   id: z.string(),
@@ -77,6 +78,15 @@ export const schema = z.object({
   valorTotal: z.number(),
   entrega: z.string(),
   observacoes: z.string(),
+  // IDs for editing — not displayed in table
+  harvest_id: z.string(),
+  producer_id: z.string(),
+  farm_id: z.string(),
+  company_id: z.string(),
+  type_id: z.string(),
+  supplier_id: z.string(),
+  product_id: z.string(),
+  unit_id: z.string(),
 })
 
 function toBRL(value: number) {
@@ -127,6 +137,7 @@ export function InvoicesTable({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [invoiceToDelete, setInvoiceToDelete] =
     React.useState<z.infer<typeof schema> | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingInvoice, setEditingInvoice] =
@@ -528,19 +539,28 @@ export function InvoicesTable({
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                toast.promise(
-                  new Promise((resolve) => setTimeout(resolve, 500)),
-                  {
-                    loading: `Excluindo NF ${invoiceToDelete?.notaFiscal}...`,
-                    success: "Nota fiscal excluída",
-                    error: "Erro ao excluir",
+              disabled={isDeleting}
+              onClick={async () => {
+                if (!invoiceToDelete) return
+                setIsDeleting(true)
+                try {
+                  await InvoicesService.delete(invoiceToDelete.id)
+                  toast.success(`Nota fiscal ${invoiceToDelete.notaFiscal} excluída.`)
+                  setDeleteDialogOpen(false)
+                  setInvoiceToDelete(null)
+                  onSaved()
+                } catch (err) {
+                  if (err instanceof ApiError) {
+                    toast.error(err.message || "Erro ao excluir nota fiscal.")
+                  } else {
+                    toast.error("Erro de conexão ao excluir.")
                   }
-                )
-                setInvoiceToDelete(null)
+                } finally {
+                  setIsDeleting(false)
+                }
               }}
             >
-              Excluir
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
