@@ -25,10 +25,12 @@ export interface CreatableField {
 interface CreatableInputProps<T extends { id: string; name: string }> {
   value: CreatableField
   onChange: (field: CreatableField) => void
-  /** Async function to search by name — called after 2s debounce */
+  /** Async function to search by name — with 300ms debounce */
   searchFn: (query: string) => Promise<T[]>
   placeholder?: string
   disabled?: boolean
+  id?: string
+  ariaInvalid?: boolean
 }
 
 /* ---------- Component ---------- */
@@ -39,13 +41,15 @@ export function CreatableInput<T extends { id: string; name: string }>({
   searchFn,
   placeholder,
   disabled = false,
+  id,
+  ariaInvalid,
 }: CreatableInputProps<T>) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [results, setResults] = React.useState<T[]>([])
   const [isSearching, setIsSearching] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
-  // Debounce de 2s antes de pesquisar no backend
+  // Debounce de 300ms antes de pesquisar no backend
   React.useEffect(() => {
     if (!value.name.trim()) {
       setResults([])
@@ -62,7 +66,7 @@ export function CreatableInput<T extends { id: string; name: string }>({
       } finally {
         setIsSearching(false)
       }
-    }, 2000)
+    }, 300)
 
     return () => clearTimeout(timer)
   }, [value.name, searchFn])
@@ -96,11 +100,13 @@ export function CreatableInput<T extends { id: string; name: string }>({
   return (
     <div ref={containerRef} className="relative">
       <Input
+        id={id}
         value={value.name}
         onChange={handleInputChange}
         onFocus={() => setIsOpen(true)}
         placeholder={placeholder}
         disabled={disabled}
+        aria-invalid={ariaInvalid}
       />
       {showDropdown && (
         <div className="absolute z-50 mt-1 w-full rounded-lg border bg-popover text-popover-foreground shadow-md">

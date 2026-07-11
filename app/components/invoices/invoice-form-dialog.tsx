@@ -13,13 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
-import { Field, FieldGroup, FieldLabel } from "~/components/ui/field"
+import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
+import { Textarea } from "~/components/ui/textarea"
 
 import {
   CreatableInput,
   type CreatableField,
 } from "~/components/shared/creatable-input"
+import { DatePickerInput } from "~/components/shared/date-picker-input"
+import { CurrencyInput } from "~/components/shared/currency-input"
 import {
   InvoicesService,
   ProducersService,
@@ -33,6 +36,156 @@ import {
 } from "~/lib/api"
 
 import { schema } from "./invoices-table"
+
+/* ---------- Form State ---------- */
+
+interface InvoiceFormState {
+  harvest: CreatableField
+  producer: CreatableField
+  farm: CreatableField
+  company: CreatableField
+  invoiceType: CreatableField
+  supplier: CreatableField
+  product: CreatableField
+  unit: CreatableField
+  originInvoice: string
+  notaFiscal: string
+  dataNF: string
+  quantidade: string
+  precoUnitario: string
+  valorTotal: string
+  entrega: string
+  observacoes: string
+}
+
+type InvoiceFormAction =
+  | { type: "SET_FIELD"; field: Exclude<keyof InvoiceFormState, "harvest" | "producer" | "farm" | "company" | "invoiceType" | "supplier" | "product" | "unit">; value: string }
+  | { type: "SET_CREATABLE"; field: "harvest" | "producer" | "farm" | "company" | "invoiceType" | "supplier" | "product" | "unit"; value: CreatableField }
+  | { type: "RESET" }
+  | { type: "POPULATE"; invoice: z.infer<typeof schema> }
+
+const creatableInitial: CreatableField = { name: "", selectedId: null }
+
+const initialFormState: InvoiceFormState = {
+  harvest: { ...creatableInitial },
+  producer: { ...creatableInitial },
+  farm: { ...creatableInitial },
+  company: { ...creatableInitial },
+  invoiceType: { ...creatableInitial },
+  supplier: { ...creatableInitial },
+  product: { ...creatableInitial },
+  unit: { ...creatableInitial },
+  originInvoice: "",
+  notaFiscal: "",
+  dataNF: "",
+  quantidade: "",
+  precoUnitario: "",
+  valorTotal: "",
+  entrega: "",
+  observacoes: "",
+}
+
+function formReducer(state: InvoiceFormState, action: InvoiceFormAction): InvoiceFormState {
+  switch (action.type) {
+    case "SET_FIELD":
+      return { ...state, [action.field]: action.value }
+    case "SET_CREATABLE":
+      return { ...state, [action.field]: action.value }
+    case "RESET":
+      return initialFormState
+    case "POPULATE":
+      return {
+        harvest: { name: action.invoice.safra, selectedId: action.invoice.harvest_id },
+        producer: { name: action.invoice.produtor, selectedId: action.invoice.producer_id },
+        farm: { name: action.invoice.fazenda, selectedId: action.invoice.farm_id },
+        company: { name: action.invoice.empresa, selectedId: action.invoice.company_id },
+        invoiceType: { name: action.invoice.tipo, selectedId: action.invoice.type_id },
+        supplier: { name: action.invoice.fornecedor, selectedId: action.invoice.supplier_id },
+        product: { name: action.invoice.produto, selectedId: action.invoice.product_id },
+        unit: { name: action.invoice.unidade, selectedId: action.invoice.unit_id },
+        originInvoice: action.invoice.nfOrigem,
+        notaFiscal: action.invoice.notaFiscal,
+        dataNF: action.invoice.dataNF,
+        quantidade: String(action.invoice.quantidade),
+        precoUnitario: String(action.invoice.precoUnitario),
+        valorTotal: String(action.invoice.valorTotal),
+        entrega: action.invoice.entrega,
+        observacoes: action.invoice.observacoes,
+      }
+    default:
+      return state
+  }
+}
+
+/* ---------- Validation ---------- */
+
+interface FormErrors {
+  harvest?: string
+  producer?: string
+  farm?: string
+  company?: string
+  invoiceType?: string
+  notaFiscal?: string
+  dataNF?: string
+  supplier?: string
+  product?: string
+  unit?: string
+  quantidade?: string
+  precoUnitario?: string
+  valorTotal?: string
+}
+
+function validateForm(state: InvoiceFormState): FormErrors | null {
+  const errors: FormErrors = {}
+
+  // Campos relacionais obrigatórios
+  if (!state.harvest.name.trim()) {
+    errors.harvest = "Safra é obrigatória."
+  }
+  if (!state.producer.name.trim()) {
+    errors.producer = "Produtor é obrigatório."
+  }
+  if (!state.farm.name.trim()) {
+    errors.farm = "Fazenda é obrigatória."
+  }
+  if (!state.company.name.trim()) {
+    errors.company = "Empresa é obrigatória."
+  }
+  if (!state.invoiceType.name.trim()) {
+    errors.invoiceType = "Tipo é obrigatório."
+  }
+  if (!state.supplier.name.trim()) {
+    errors.supplier = "Fornecedor é obrigatório."
+  }
+  if (!state.product.name.trim()) {
+    errors.product = "Produto é obrigatório."
+  }
+  if (!state.unit.name.trim()) {
+    errors.unit = "Unidade é obrigatória."
+  }
+
+  // Campos diretos obrigatórios
+  if (!state.notaFiscal.trim()) {
+    errors.notaFiscal = "Nota fiscal é obrigatória."
+  }
+  if (!state.dataNF.trim()) {
+    errors.dataNF = "Data da NF é obrigatória."
+  }
+  const qty = Number(state.quantidade)
+  if (!state.quantidade.trim() || isNaN(qty) || qty <= 0) {
+    errors.quantidade = "Quantidade deve ser maior que zero."
+  }
+  const price = Number(state.precoUnitario)
+  if (!state.precoUnitario.trim() || isNaN(price) || price <= 0) {
+    errors.precoUnitario = "Preço unitário deve ser maior que zero."
+  }
+  const total = Number(state.valorTotal)
+  if (!state.valorTotal.trim() || isNaN(total) || total <= 0) {
+    errors.valorTotal = "Valor total deve ser maior que zero."
+  }
+
+  return Object.keys(errors).length > 0 ? errors : null
+}
 
 /* ---------- Props ---------- */
 
@@ -51,73 +204,17 @@ export function InvoiceFormDialog({
   editingInvoice,
   onSaved,
 }: InvoiceFormDialogProps) {
+  const [form, dispatch] = React.useReducer(formReducer, initialFormState)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [formError, setFormError] = React.useState<string | null>(null)
-
-  // Relational fields
-  const [formHarvest, setFormHarvest] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formProducer, setFormProducer] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formFarm, setFormFarm] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formCompany, setFormCompany] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formInvoiceType, setFormInvoiceType] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formSupplier, setFormSupplier] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formProduct, setFormProduct] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formUnit, setFormUnit] = React.useState<CreatableField>({
-    name: "",
-    selectedId: null,
-  })
-  const [formOriginInvoice, setFormOriginInvoice] = React.useState("")
-
-  // Direct fields
-  const [formNotaFiscal, setFormNotaFiscal] = React.useState("")
-  const [formDataNF, setFormDataNF] = React.useState("")
-  const [formQuantidade, setFormQuantidade] = React.useState("")
-  const [formPrecoUnitario, setFormPrecoUnitario] = React.useState("")
-  const [formValorTotal, setFormValorTotal] = React.useState("")
-  const [formEntrega, setFormEntrega] = React.useState("")
-  const [formObservacoes, setFormObservacoes] = React.useState("")
+  const [fieldErrors, setFieldErrors] = React.useState<FormErrors | null>(null)
 
   /* ---------- Reset ---------- */
 
   const resetForm = React.useCallback(() => {
-    setFormHarvest({ name: "", selectedId: null })
-    setFormProducer({ name: "", selectedId: null })
-    setFormFarm({ name: "", selectedId: null })
-    setFormCompany({ name: "", selectedId: null })
-    setFormInvoiceType({ name: "", selectedId: null })
-    setFormSupplier({ name: "", selectedId: null })
-    setFormProduct({ name: "", selectedId: null })
-    setFormUnit({ name: "", selectedId: null })
-    setFormOriginInvoice("")
-    setFormNotaFiscal("")
-    setFormDataNF("")
-    setFormQuantidade("")
-    setFormPrecoUnitario("")
-    setFormValorTotal("")
-    setFormEntrega("")
-    setFormObservacoes("")
+    dispatch({ type: "RESET" })
     setFormError(null)
+    setFieldErrors(null)
     setIsSubmitting(false)
   }, [])
 
@@ -125,24 +222,10 @@ export function InvoiceFormDialog({
 
   React.useEffect(() => {
     if (!open) return
+    setFieldErrors(null)
 
     if (editingInvoice) {
-      setFormHarvest({ name: editingInvoice.safra, selectedId: editingInvoice.harvest_id })
-      setFormProducer({ name: editingInvoice.produtor, selectedId: editingInvoice.producer_id })
-      setFormFarm({ name: editingInvoice.fazenda, selectedId: editingInvoice.farm_id })
-      setFormCompany({ name: editingInvoice.empresa, selectedId: editingInvoice.company_id })
-      setFormInvoiceType({ name: editingInvoice.tipo, selectedId: editingInvoice.type_id })
-      setFormSupplier({ name: editingInvoice.fornecedor, selectedId: editingInvoice.supplier_id })
-      setFormProduct({ name: editingInvoice.produto, selectedId: editingInvoice.product_id })
-      setFormUnit({ name: editingInvoice.unidade, selectedId: editingInvoice.unit_id })
-      setFormOriginInvoice(editingInvoice.nfOrigem)
-      setFormNotaFiscal(editingInvoice.notaFiscal)
-      setFormDataNF(editingInvoice.dataNF)
-      setFormQuantidade(String(editingInvoice.quantidade))
-      setFormPrecoUnitario(String(editingInvoice.precoUnitario))
-      setFormValorTotal(String(editingInvoice.valorTotal))
-      setFormEntrega(editingInvoice.entrega)
-      setFormObservacoes(editingInvoice.observacoes)
+      dispatch({ type: "POPULATE", invoice: editingInvoice })
       setFormError(null)
       setIsSubmitting(false)
     } else {
@@ -164,6 +247,15 @@ export function InvoiceFormDialog({
 
   const handleSave = async () => {
     setFormError(null)
+    setFieldErrors(null)
+
+    // Validação dos campos
+    const errors = validateForm(form)
+    if (errors) {
+      setFieldErrors(errors)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -177,33 +269,33 @@ export function InvoiceFormDialog({
         invoiceTypeId,
         supplierId,
       ] = await Promise.all([
-        ensure(formProducer, ProducersService.create),
-        ensure(formFarm, FarmsService.create),
-        ensure(formHarvest, HarvestsService.create),
-        ensure(formUnit, UnitsService.create),
-        ensure(formProduct, ProductsService.create),
-        ensure(formCompany, CompaniesService.create),
-        ensure(formInvoiceType, InvoiceTypesService.create),
-        ensure(formSupplier, CompaniesService.create),
+        ensure(form.producer, ProducersService.create),
+        ensure(form.farm, FarmsService.create),
+        ensure(form.harvest, HarvestsService.create),
+        ensure(form.unit, UnitsService.create),
+        ensure(form.product, ProductsService.create),
+        ensure(form.company, CompaniesService.create),
+        ensure(form.invoiceType, InvoiceTypesService.create),
+        ensure(form.supplier, CompaniesService.create),
       ])
 
       const payload: Record<string, unknown> = {
-        number: formNotaFiscal,
-        date: formDataNF,
-        harvest_id: harvestId,
-        producer_id: producerId,
-        farm_id: farmId,
-        company_id: companyId,
-        type_id: invoiceTypeId,
-        supplier_id: supplierId,
-        product_id: productId,
-        unit_id: unitId,
-        quantity: Number(formQuantidade) || 0,
-        unit_price: Number(formPrecoUnitario) || 0,
-        total_value: Number(formValorTotal) || 0,
-        origin_invoice_number: formOriginInvoice || null,
-        ...(formEntrega ? { delivery: formEntrega } : {}),
-        ...(formObservacoes ? { notes: formObservacoes } : {}),
+        number: form.notaFiscal,
+        date: form.dataNF,
+        harvest_id: harvestId || null,
+        producer_id: producerId || null,
+        farm_id: farmId || null,
+        company_id: companyId || null,
+        type_id: invoiceTypeId || null,
+        supplier_id: supplierId || null,
+        product_id: productId || null,
+        unit_id: unitId || null,
+        quantity: Number(form.quantidade) || 0,
+        unit_price: Number(form.precoUnitario) || 0,
+        total_value: Number(form.valorTotal) || 0,
+        origin_invoice_number: form.originInvoice || null,
+        ...(form.entrega ? { delivery: form.entrega } : {}),
+        ...(form.observacoes ? { notes: form.observacoes } : {}),
       }
 
       if (editingInvoice) {
@@ -238,7 +330,7 @@ export function InvoiceFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-4xl max-h-[85vh] overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -258,189 +350,230 @@ export function InvoiceFormDialog({
           </div>
         )}
 
-        <FieldGroup className="grid grid-cols-3 gap-4">
-          <Field>
+        <FieldGroup>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Field data-invalid={!!fieldErrors?.harvest}>
             <FieldLabel>Safra</FieldLabel>
             <CreatableInput
-              value={formHarvest}
-              onChange={setFormHarvest}
+              id="harvest"
+              value={form.harvest}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "harvest", value: val })}
               searchFn={HarvestsService.search}
               placeholder="Digite a safra..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.harvest}
             />
+            {fieldErrors?.harvest && <FieldError>{fieldErrors.harvest}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.producer}>
             <FieldLabel>Produtor</FieldLabel>
             <CreatableInput
-              value={formProducer}
-              onChange={setFormProducer}
+              id="producer"
+              value={form.producer}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "producer", value: val })}
               searchFn={ProducersService.search}
               placeholder="Digite o produtor..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.producer}
             />
+            {fieldErrors?.producer && <FieldError>{fieldErrors.producer}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.farm}>
             <FieldLabel>Fazenda</FieldLabel>
             <CreatableInput
-              value={formFarm}
-              onChange={setFormFarm}
+              id="farm"
+              value={form.farm}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "farm", value: val })}
               searchFn={FarmsService.search}
               placeholder="Digite a fazenda..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.farm}
             />
+            {fieldErrors?.farm && <FieldError>{fieldErrors.farm}</FieldError>}
           </Field>
           <Field>
             <FieldLabel htmlFor="nfOrigem">NF Origem</FieldLabel>
             <Input
               id="nfOrigem"
-              value={formOriginInvoice}
-              onChange={(e) => setFormOriginInvoice(e.target.value)}
+              value={form.originInvoice}
+              onChange={(e) => dispatch({ type: "SET_FIELD", field: "originInvoice", value: e.target.value })}
               placeholder="Número da NF de origem"
               disabled={isSubmitting}
             />
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.company}>
             <FieldLabel>Empresa</FieldLabel>
             <CreatableInput
-              value={formCompany}
-              onChange={setFormCompany}
+              id="company"
+              value={form.company}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "company", value: val })}
               searchFn={CompaniesService.search}
               placeholder="Digite a empresa..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.company}
             />
+            {fieldErrors?.company && <FieldError>{fieldErrors.company}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.invoiceType}>
             <FieldLabel>Tipo</FieldLabel>
             <CreatableInput
-              value={formInvoiceType}
-              onChange={setFormInvoiceType}
+              id="invoiceType"
+              value={form.invoiceType}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "invoiceType", value: val })}
               searchFn={InvoiceTypesService.search}
               placeholder="Digite o tipo..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.invoiceType}
             />
+            {fieldErrors?.invoiceType && <FieldError>{fieldErrors.invoiceType}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.notaFiscal}>
             <FieldLabel htmlFor="notaFiscal">Nota Fiscal</FieldLabel>
             <Input
               id="notaFiscal"
-              value={formNotaFiscal}
-              onChange={(e) => setFormNotaFiscal(e.target.value)}
+              value={form.notaFiscal}
+              onChange={(e) => dispatch({ type: "SET_FIELD", field: "notaFiscal", value: e.target.value })}
               placeholder="Número da NF"
               disabled={isSubmitting}
+              aria-invalid={!!fieldErrors?.notaFiscal || undefined}
             />
+            {fieldErrors?.notaFiscal && (
+              <FieldError>{fieldErrors.notaFiscal}</FieldError>
+            )}
           </Field>
-          <Field>
-            <FieldLabel htmlFor="dataNF">Data NF</FieldLabel>
-            <Input
+          <Field data-invalid={!!fieldErrors?.dataNF}>
+            <FieldLabel>Data NF</FieldLabel>
+            <DatePickerInput
               id="dataNF"
-              type="date"
-              value={formDataNF}
-              onChange={(e) => setFormDataNF(e.target.value)}
+              value={form.dataNF}
+              onChange={(val) => dispatch({ type: "SET_FIELD", field: "dataNF", value: val })}
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.dataNF}
             />
+            {fieldErrors?.dataNF && (
+              <FieldError>{fieldErrors.dataNF}</FieldError>
+            )}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.supplier}>
             <FieldLabel>Fornecedor</FieldLabel>
             <CreatableInput
-              value={formSupplier}
-              onChange={setFormSupplier}
+              id="supplier"
+              value={form.supplier}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "supplier", value: val })}
               searchFn={CompaniesService.search}
               placeholder="Digite o fornecedor..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.supplier}
             />
+            {fieldErrors?.supplier && <FieldError>{fieldErrors.supplier}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.product}>
             <FieldLabel>Produto</FieldLabel>
             <CreatableInput
-              value={formProduct}
-              onChange={setFormProduct}
+              id="product"
+              value={form.product}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "product", value: val })}
               searchFn={ProductsService.search}
               placeholder="Digite o produto..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.product}
             />
+            {fieldErrors?.product && <FieldError>{fieldErrors.product}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.unit}>
             <FieldLabel>Unidade</FieldLabel>
             <CreatableInput
-              value={formUnit}
-              onChange={setFormUnit}
+              id="unit"
+              value={form.unit}
+              onChange={(val) => dispatch({ type: "SET_CREATABLE", field: "unit", value: val })}
               searchFn={UnitsService.search}
               placeholder="Digite a unidade..."
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.unit}
             />
+            {fieldErrors?.unit && <FieldError>{fieldErrors.unit}</FieldError>}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.quantidade}>
             <FieldLabel htmlFor="quantidade">Quantidade</FieldLabel>
             <Input
               id="quantidade"
               type="number"
               step="0.01"
-              value={formQuantidade}
-              onChange={(e) => setFormQuantidade(e.target.value)}
+              value={form.quantidade}
+              onChange={(e) => dispatch({ type: "SET_FIELD", field: "quantidade", value: e.target.value })}
               onBlur={() => {
-                const qty = Number(formQuantidade)
-                const price = Number(formPrecoUnitario)
+                const qty = Number(form.quantidade)
+                const price = Number(form.precoUnitario)
                 if (qty > 0 && price > 0) {
-                  setFormValorTotal(String(qty * price))
+                  dispatch({ type: "SET_FIELD", field: "valorTotal", value: String(qty * price) })
                 }
               }}
               placeholder="0,00"
               disabled={isSubmitting}
+              aria-invalid={!!fieldErrors?.quantidade || undefined}
             />
+            {fieldErrors?.quantidade && (
+              <FieldError>{fieldErrors.quantidade}</FieldError>
+            )}
           </Field>
-          <Field>
+          <Field data-invalid={!!fieldErrors?.precoUnitario}>
             <FieldLabel htmlFor="precoUnitario">
-              Preço Unitário (R$)
+              Preço Unitário
             </FieldLabel>
-            <Input
+            <CurrencyInput
               id="precoUnitario"
-              type="number"
-              step="0.01"
-              value={formPrecoUnitario}
-              onChange={(e) => setFormPrecoUnitario(e.target.value)}
+              value={form.precoUnitario}
+              onChange={(val) => dispatch({ type: "SET_FIELD", field: "precoUnitario", value: val })}
               onBlur={() => {
-                const qty = Number(formQuantidade)
-                const price = Number(formPrecoUnitario)
+                const qty = Number(form.quantidade)
+                const price = Number(form.precoUnitario)
                 if (qty > 0 && price > 0) {
-                  setFormValorTotal(String(qty * price))
+                  dispatch({ type: "SET_FIELD", field: "valorTotal", value: String(qty * price) })
                 }
               }}
               placeholder="0,00"
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.precoUnitario}
             />
+            {fieldErrors?.precoUnitario && (
+              <FieldError>{fieldErrors.precoUnitario}</FieldError>
+            )}
           </Field>
-          <Field>
-            <FieldLabel htmlFor="valorTotal">Valor Total (R$)</FieldLabel>
-            <Input
+          <Field data-invalid={!!fieldErrors?.valorTotal}>
+            <FieldLabel htmlFor="valorTotal">Valor Total</FieldLabel>
+            <CurrencyInput
               id="valorTotal"
-              type="number"
-              step="0.01"
-              value={formValorTotal}
-              onChange={(e) => setFormValorTotal(e.target.value)}
+              value={form.valorTotal}
+              onChange={(val) => dispatch({ type: "SET_FIELD", field: "valorTotal", value: val })}
               placeholder="0,00"
               disabled={isSubmitting}
+              ariaInvalid={!!fieldErrors?.valorTotal}
             />
+            {fieldErrors?.valorTotal && (
+              <FieldError>{fieldErrors.valorTotal}</FieldError>
+            )}
           </Field>
           <Field>
             <FieldLabel htmlFor="entrega">Entrega</FieldLabel>
             <Input
               id="entrega"
-              value={formEntrega}
-              onChange={(e) => setFormEntrega(e.target.value)}
+              value={form.entrega}
+              onChange={(e) => dispatch({ type: "SET_FIELD", field: "entrega", value: e.target.value })}
               placeholder="Status/data de entrega"
               disabled={isSubmitting}
             />
           </Field>
-          <Field className="col-span-3">
+          <Field className="md:col-span-2 lg:col-span-3">
             <FieldLabel htmlFor="observacoes">Observações</FieldLabel>
-            <Input
+            <Textarea
               id="observacoes"
-              value={formObservacoes}
-              onChange={(e) => setFormObservacoes(e.target.value)}
+              value={form.observacoes}
+              onChange={(e) => dispatch({ type: "SET_FIELD", field: "observacoes", value: e.target.value })}
               placeholder="Observações adicionais"
               disabled={isSubmitting}
             />
           </Field>
+          </div>
         </FieldGroup>
 
         <DialogFooter>

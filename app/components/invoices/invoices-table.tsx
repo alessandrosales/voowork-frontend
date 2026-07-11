@@ -55,9 +55,12 @@ import {
   ChevronRightIcon,
   ChevronsRightIcon,
   SearchIcon,
+  DownloadIcon,
+  UploadIcon,
 } from "lucide-react"
 
 import { InvoiceFormDialog } from "~/components/invoices/invoice-form-dialog"
+import { ImportInvoiceDialog } from "~/components/invoices/import-invoice-dialog"
 import { InvoicesService, ApiError } from "~/lib/api"
 
 export const schema = z.object({
@@ -140,6 +143,7 @@ export function InvoicesTable({
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
+  const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const [editingInvoice, setEditingInvoice] =
     React.useState<z.infer<typeof schema> | null>(null)
 
@@ -343,25 +347,33 @@ export function InvoicesTable({
     <div className="flex w-full flex-col gap-6">
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+            <div className="relative w-full sm:max-w-sm">
               <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
                 placeholder="Buscar por número, produtor, fornecedor, produto..."
                 value={searchQuery}
                 onChange={(event) => onSearchChange(event.target.value)}
-                className="pl-8 w-96 h-8"
+                className="pl-8 w-full h-8"
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end">
+            <Button variant="outline" size="lg">
+              <DownloadIcon />
+              <span>Exportar</span>
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
+              <UploadIcon />
+              <span>Importar</span>
+            </Button>
             <Button size="lg" onClick={() => {
               setEditingInvoice(null)
               setFormDialogOpen(true)
             }}>
               <PlusIcon />
-              <span className="hidden lg:inline">Nova Nota Fiscal</span>
+              <span>Nova Nota Fiscal</span>
             </Button>
           </div>
         </div>
@@ -435,12 +447,12 @@ export function InvoicesTable({
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex flex-row items-center justify-between gap-2 px-4 lg:px-6">
+        <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
           <span className="text-sm">{totalCount} registro(s)</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 sm:gap-4 flex-nowrap">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <span>Linhas por página</span>
             <Select
               value={`${perPage}`}
@@ -460,7 +472,7 @@ export function InvoicesTable({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <span>
               Página {page} de {totalPages}
             </span>
@@ -509,6 +521,11 @@ export function InvoicesTable({
           </div>
         </div>
       </div>
+
+      <ImportInvoiceDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
 
       <InvoiceFormDialog
         open={formDialogOpen}

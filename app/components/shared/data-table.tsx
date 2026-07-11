@@ -427,7 +427,7 @@ export function DataTable({
           </TabsTrigger>
           <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
         </TabsList>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -463,7 +463,7 @@ export function DataTable({
           <Button variant="outline" size="sm">
             <PlusIcon
             />
-            <span className="hidden lg:inline">Add Section</span>
+            <span>Add Section</span>
           </Button>
         </div>
       </div>

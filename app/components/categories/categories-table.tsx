@@ -264,8 +264,8 @@ export function CategoriesTable({
     <div className="flex w-full flex-col gap-6">
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+            <div className="relative w-full sm:max-w-sm">
               <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar categorias..."
@@ -273,7 +273,7 @@ export function CategoriesTable({
                 onChange={(event) =>
                   table.getColumn("nome")?.setFilterValue(event.target.value)
                 }
-                className="pl-8 w-64 h-8"
+                className="pl-8 w-full h-8"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -289,10 +289,10 @@ export function CategoriesTable({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end">
             <Button size="lg" onClick={openCreateDialog}>
               <PlusIcon />
-              <span className="hidden lg:inline">Nova Categoria</span>
+              <span>Nova Categoria</span>
             </Button>
           </div>
         </div>
@@ -358,14 +358,14 @@ export function CategoriesTable({
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex flex-row items-center justify-between gap-2 px-4 lg:px-6">
+        <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
           <span className="text-sm">
             {table.getFilteredRowModel().rows.length} registro(s)
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 sm:gap-4 flex-nowrap">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <span>Linhas por página</span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
@@ -387,7 +387,7 @@ export function CategoriesTable({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <span>
               Página {table.getState().pagination.pageIndex + 1} de{" "}
               {table.getPageCount()}

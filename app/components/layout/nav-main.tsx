@@ -5,6 +5,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "~/components/ui/sidebar"
 import { Link, useLocation } from "react-router"
 
@@ -22,6 +23,13 @@ export function NavMain({
   items: NavItem[]
 }) {
   const location = useLocation()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  const handleClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <SidebarGroup>
@@ -37,7 +45,7 @@ export function NavMain({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                  <Link to={item.url}>
+                  <Link to={item.url} onClick={handleClick}>
                     {item.icon}
                     <span>{item.title}</span>
                   </Link>
