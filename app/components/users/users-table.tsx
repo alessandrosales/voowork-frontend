@@ -369,7 +369,7 @@ export function UsersTable() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-4">
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
@@ -461,7 +461,7 @@ export function UsersTable() {
       </div>
 
       <div className="flex flex-row items-center justify-between gap-2 px-4 lg:px-6">
-        <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
+        <div className="flex items-center h-8 gap-2 text-muted-foreground whitespace-nowrap">
           <span className="text-sm">
             {table.getFilteredRowModel().rows.length} registro(s)
           </span>
