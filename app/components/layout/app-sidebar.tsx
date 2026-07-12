@@ -1,4 +1,7 @@
+"use client"
+
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 
 import { Logo } from "~/components/shared/logo"
 import { AiAssistantDialog } from "~/components/agents/ai-assistant-dialog"
@@ -18,37 +21,45 @@ import {
   BotIcon,
   LayoutDashboardIcon,
   FolderKanbanIcon,
+  UsersIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
 
-const navData = {
-  navPrimary: [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: <LayoutDashboardIcon />,
-    },
-    {
-      title: "Usuários",
-      url: "/usuarios",
-      icon: <UserCogIcon />,
-    },
-    {
-      title: "Projetos",
-      url: "/projetos",
-      icon: <FolderKanbanIcon />,
-    },
-    {
-      title: "Agentes",
-      url: "/agentes",
-      icon: <BotIcon />,
-    },
-  ],
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
+  const { t } = useTranslation()
+
+  const navPrimary = React.useMemo(
+    () => [
+      {
+        title: t("nav.dashboard"),
+        url: "/",
+        icon: <LayoutDashboardIcon />,
+      },
+      {
+        title: t("nav.users"),
+        url: "/users",
+        icon: <UserCogIcon />,
+      },
+      {
+        title: t("nav.customers"),
+        url: "/customers",
+        icon: <UsersIcon />,
+      },
+      {
+        title: t("nav.projects"),
+        url: "/projects",
+        icon: <FolderKanbanIcon />,
+      },
+      {
+        title: t("nav.agents"),
+        url: "/agents",
+        icon: <BotIcon />,
+      },
+    ],
+    [t],
+  )
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -68,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain title="Menu Principal" items={navData.navPrimary} />
+        <NavMain title={t("nav.menu-title")} items={navPrimary} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

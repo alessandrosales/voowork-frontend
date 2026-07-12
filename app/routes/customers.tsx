@@ -1,10 +1,6 @@
-import { ClientsTable, schema } from "~/components/clients/clients-table"
-import type { z } from "zod"
+import { CustomersTable } from "~/components/customers/customers-table"
 
-import rawData from "../clients/data.json"
-const data = rawData as z.infer<typeof schema>[]
-
-export default function ClientsPage() {
+export default function CustomersPage() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
@@ -14,7 +10,7 @@ export default function ClientsPage() {
               Clientes
             </h1>
           </div>
-          <ClientsTable data={data} />
+          <CustomersTable />
         </div>
       </div>
     </div>

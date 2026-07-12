@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import {
   flexRender,
@@ -11,7 +13,6 @@ import {
   type SortingState,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { z } from "zod"
 
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -71,26 +72,48 @@ import {
   ChevronsRightIcon,
   CircleCheckIcon,
   XCircleIcon,
+  ClockIcon,
   SearchIcon,
 } from "lucide-react"
 
-export const schema = z.object({
-  id: z.number(),
-  nome: z.string(),
-  email: z.string(),
-  telefone: z.string(),
-  status: z.string(),
-  dataCriacao: z.string(),
-})
+import { CustomersService, ApiError } from "~/lib/api"
+import type { Customer } from "~/lib/api/types"
 
-export function ClientsTable({
-  data: initialData,
-}: {
-  data: z.infer<typeof schema>[]
-}) {
-  const [data, setData] = React.useState(() => initialData)
+const STATUS_OPTIONS = [
+  { value: "active", label: "Ativo" },
+  { value: "invited", label: "Convidado" },
+  { value: "inactive", label: "Inativo" },
+] as const
+
+function getStatusBadge(status: Customer["status"]) {
+  switch (status) {
+    case "active":
+      return {
+        icon: CircleCheckIcon,
+        className: "fill-green-500 dark:fill-green-400",
+        label: "Ativo",
+      }
+    case "invited":
+      return {
+        icon: ClockIcon,
+        className: "fill-amber-500 dark:fill-amber-400",
+        label: "Convidado",
+      }
+    case "inactive":
+      return {
+        icon: XCircleIcon,
+        className: "fill-red-500 dark:fill-red-400",
+        label: "Inativo",
+      }
+  }
+}
+
+export function CustomersTable() {
+  const [data, setData] = React.useState<Customer[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState({
@@ -100,54 +123,153 @@ export function ClientsTable({
 
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [clientToDelete, setClientToDelete] =
-    React.useState<z.infer<typeof schema> | null>(null)
+  const [customerToDelete, setCustomerToDelete] = React.useState<Customer | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
-  const [editingClient, setEditingClient] =
-    React.useState<z.infer<typeof schema> | null>(null)
+  const [editingCustomer, setEditingCustomer] = React.useState<Customer | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
 
-  const [formNome, setFormNome] = React.useState("")
+  const [formName, setFormName] = React.useState("")
   const [formEmail, setFormEmail] = React.useState("")
-  const [formTelefone, setFormTelefone] = React.useState("")
-  const [formStatus, setFormStatus] = React.useState("Ativo")
+  const [formPhone, setFormPhone] = React.useState("")
+  const [formStatus, setFormStatus] = React.useState<string>("active")
+  const [formPassword, setFormPassword] = React.useState("")
+  const [formPasswordConfirmation, setFormPasswordConfirmation] =
+    React.useState("")
 
-  const openCreateDialog = () => {
-    setEditingClient(null)
-    setFormNome("")
-    setFormEmail("")
-    setFormTelefone("")
-    setFormStatus("Ativo")
-    setFormDialogOpen(true)
-  }
-
-  const openEditDialog = (client: z.infer<typeof schema>) => {
-    setEditingClient(client)
-    setFormNome(client.nome)
-    setFormEmail(client.email)
-    setFormTelefone(client.telefone)
-    setFormStatus(client.status)
-    setFormDialogOpen(true)
-  }
-
-  const handleSave = () => {
-    const action = editingClient ? "editado" : "criado"
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 500)), {
-      loading: editingClient
-        ? `Salvando ${formNome}...`
-        : `Criando ${formNome}...`,
-      success: `Cliente ${action} (simulado)`,
-      error: "Erro",
-    })
-    setFormDialogOpen(false)
-    setEditingClient(null)
-  }
+  // --- Fetch data ---
+  const fetchCustomers = React.useCallback(() => {
+    setIsLoading(true)
+    setError(null)
+    CustomersService.list()
+      .then(setData)
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          setError(err.message)
+        } else {
+          setError("Erro ao carregar clientes.")
+        }
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   React.useEffect(() => {
+    fetchCustomers()
+  }, [fetchCustomers])
+
+  // --- Dialog helpers ---
+  const openCreateDialog = () => {
+    setEditingCustomer(null)
+    setFormName("")
+    setFormEmail("")
+    setFormPhone("")
+    setFormStatus("active")
+    setFormPassword("")
+    setFormPasswordConfirmation("")
+    setFormError(null)
+    setFormDialogOpen(true)
+  }
+
+  const openEditDialog = (customer: Customer) => {
+    setEditingCustomer(customer)
+    setFormName(customer.name)
+    setFormEmail(customer.email)
+    setFormPhone(customer.phone ?? "")
+    setFormStatus(customer.status)
+    setFormPassword("")
+    setFormPasswordConfirmation("")
+    setFormError(null)
+    setFormDialogOpen(true)
+  }
+
+  // --- Save (create/update) ---
+  const handleSave = async () => {
+    setFormError(null)
+    setIsSubmitting(true)
+
+    if (formPassword && formPassword !== formPasswordConfirmation) {
+      setFormError("As senhas não conferem.")
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      if (editingCustomer) {
+        await CustomersService.update(editingCustomer.id, {
+          name: formName,
+          email: formEmail,
+          phone: formPhone || undefined,
+          status: formStatus,
+          ...(formPassword
+            ? {
+                password: formPassword,
+                password_confirmation: formPasswordConfirmation,
+              }
+            : {}),
+        })
+        toast.success("Cliente atualizado com sucesso.")
+      } else {
+        await CustomersService.create({
+          name: formName,
+          email: formEmail,
+          phone: formPhone || undefined,
+          status: formStatus,
+          ...(formPassword
+            ? {
+                password: formPassword,
+                password_confirmation: formPasswordConfirmation,
+              }
+            : {}),
+        })
+        toast.success("Cliente criado com sucesso.")
+      }
+      setFormDialogOpen(false)
+      fetchCustomers()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.errors) {
+          const msgs = Object.values(err.errors).flat()
+          setFormError(msgs.join(". "))
+        } else {
+          setFormError(err.message)
+        }
+      } else {
+        setFormError("Erro de conexão.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // --- Delete ---
+  const handleDelete = async () => {
+    if (!customerToDelete) return
+
+    setIsDeleting(true)
+
+    try {
+      await CustomersService.delete(customerToDelete.id)
+      toast.success("Cliente excluído.")
+      setDeleteDialogOpen(false)
+      setCustomerToDelete(null)
+      fetchCustomers()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "Erro ao excluir cliente.")
+      } else {
+        toast.error("Erro de conexão.")
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // --- Sync status filter with column filters ---
+  React.useEffect(() => {
     if (statusFilter === "all") {
-      setColumnFilters((prev) =>
-        prev.filter((f) => f.id !== "status")
-      )
+      setColumnFilters((prev) => prev.filter((f) => f.id !== "status"))
     } else {
       setColumnFilters((prev) => {
         const others = prev.filter((f) => f.id !== "status")
@@ -156,7 +278,8 @@ export function ClientsTable({
     }
   }, [statusFilter])
 
-  const columns = React.useMemo<ColumnDef<z.infer<typeof schema>>[]>(
+  // --- Columns ---
+  const columns = React.useMemo<ColumnDef<Customer>[]>(
     () => [
       {
         id: "actions",
@@ -174,16 +297,14 @@ export function ClientsTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem
-                onClick={() => openEditDialog(row.original)}
-              >
+              <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
                 Editar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => {
-                  setClientToDelete(row.original)
+                  setCustomerToDelete(row.original)
                   setDeleteDialogOpen(true)
                 }}
               >
@@ -196,10 +317,10 @@ export function ClientsTable({
         enableHiding: false,
       },
       {
-        accessorKey: "nome",
+        accessorKey: "name",
         header: "Nome",
         cell: ({ row }) => (
-          <div className="font-medium">{row.original.nome}</div>
+          <div className="font-medium">{row.original.name}</div>
         ),
         enableHiding: false,
       },
@@ -211,42 +332,44 @@ export function ClientsTable({
         ),
       },
       {
-        accessorKey: "telefone",
+        accessorKey: "phone",
         header: "Telefone",
         cell: ({ row }) => (
-          <div className="text-muted-foreground">{row.original.telefone}</div>
+          <div className="text-muted-foreground">
+            {row.original.phone || "—"}
+          </div>
         ),
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            variant="outline"
-            className="px-1.5 text-muted-foreground"
-          >
-            {row.original.status === "Ativo" ? (
-              <CircleCheckIcon className="fill-green-500 dark:fill-green-400" />
-            ) : (
-              <XCircleIcon className="fill-red-500 dark:fill-red-400" />
-            )}
-            {row.original.status}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const badge = getStatusBadge(row.original.status)
+          const Icon = badge.icon
+          return (
+            <Badge variant="outline" className="px-1.5 text-muted-foreground">
+              <Icon className={badge.className} />
+              {badge.label}
+            </Badge>
+          )
+        },
+        filterFn: (row, _columnId, filterValue) => {
+          return row.original.status === filterValue
+        },
       },
       {
-        accessorKey: "dataCriacao",
+        accessorKey: "created_at",
         header: () => (
           <div className="w-full text-right">Data de Criação</div>
         ),
         cell: ({ row }) => (
           <div className="text-right text-muted-foreground">
-            {new Date(row.original.dataCriacao).toLocaleDateString("pt-BR")}
+            {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
           </div>
         ),
       },
     ],
-    []
+    [],
   )
 
   const table = useReactTable({
@@ -257,7 +380,7 @@ export function ClientsTable({
       columnFilters,
       pagination,
     },
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
@@ -267,8 +390,35 @@ export function ClientsTable({
     getSortedRowModel: getSortedRowModel(),
   })
 
+  // --- Loading state ---
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="size-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <span className="text-sm">Carregando clientes...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // --- Error state ---
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" onClick={fetchCustomers}>
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex w-full flex-col gap-6">
+      {/* Toolbar: search + status filter + new button */}
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
@@ -276,22 +426,27 @@ export function ClientsTable({
               <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar clientes..."
-                value={(table.getColumn("nome")?.getFilterValue() as string) ?? ""}
+                value={
+                  (table.getColumn("name")?.getFilterValue() as string) ?? ""
+                }
                 onChange={(event) =>
-                  table.getColumn("nome")?.setFilterValue(event.target.value)
+                  table.getColumn("name")?.setFilterValue(event.target.value)
                 }
                 className="pl-8 w-full h-8"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 !h-8">
+              <SelectTrigger className="w-44 !h-8">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Inativo">Inativo</SelectItem>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -305,6 +460,7 @@ export function ClientsTable({
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
           <Table>
@@ -316,13 +472,15 @@ export function ClientsTable({
                       <TableHead
                         key={header.id}
                         colSpan={header.colSpan}
-                        className={header.column.id === "actions" ? "w-8" : undefined}
+                        className={
+                          header.column.id === "actions" ? "w-8" : undefined
+                        }
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     )
@@ -340,11 +498,13 @@ export function ClientsTable({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={cell.column.id === "actions" ? "w-8" : undefined}
+                        className={
+                          cell.column.id === "actions" ? "w-8" : undefined
+                        }
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -356,7 +516,7 @@ export function ClientsTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    Nenhum resultado encontrado.
+                    Nenhum cliente encontrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -365,6 +525,7 @@ export function ClientsTable({
         </div>
       </div>
 
+      {/* Pagination */}
       <div className="flex flex-row items-center justify-between gap-2 px-4 lg:px-6">
         <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
           <span className="text-sm">
@@ -445,26 +606,39 @@ export function ClientsTable({
         </div>
       </div>
 
+      {/* Create / Edit dialog */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="sm:max-w-md"
+        >
           <DialogHeader>
             <DialogTitle>
-              {editingClient ? "Editar Cliente" : "Novo Cliente"}
+              {editingCustomer ? "Editar Cliente" : "Novo Cliente"}
             </DialogTitle>
             <DialogDescription>
-              {editingClient
+              {editingCustomer
                 ? "Altere os dados do cliente selecionado."
                 : "Preencha os dados para criar um novo cliente."}
             </DialogDescription>
           </DialogHeader>
+
+          {formError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
+
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="nome">Nome</FieldLabel>
+              <FieldLabel htmlFor="name">Nome</FieldLabel>
               <Input
-                id="nome"
-                value={formNome}
-                onChange={(e) => setFormNome(e.target.value)}
+                id="name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
                 placeholder="Nome completo"
+                required
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
@@ -475,73 +649,121 @@ export function ClientsTable({
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
                 placeholder="email@exemplo.com"
+                required
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="telefone">Telefone</FieldLabel>
+              <FieldLabel htmlFor="phone">Telefone</FieldLabel>
               <Input
-                id="telefone"
-                value={formTelefone}
-                onChange={(e) => setFormTelefone(e.target.value)}
-                placeholder="(00) 00000-0000"
+                id="phone"
+                type="tel"
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="+5511999999999"
+                disabled={isSubmitting}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="status">Status</FieldLabel>
-              <Select value={formStatus} onValueChange={setFormStatus}>
-                <SelectTrigger id="status" className="!h-8">
+              <FieldLabel htmlFor="form-status">Status</FieldLabel>
+              <Select
+                value={formStatus}
+                onValueChange={setFormStatus}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="form-status" className="!h-8">
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </Field>
+            <Field>
+              <FieldLabel htmlFor="password">
+                {editingCustomer
+                  ? "Nova senha (deixe em branco para manter)"
+                  : "Senha (opcional)"}
+              </FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                placeholder={
+                  editingCustomer ? "Nova senha" : "Mínimo 8 caracteres"
+                }
+                minLength={editingCustomer ? undefined : 8}
+                disabled={isSubmitting}
+              />
+            </Field>
+            {formPassword && (
+              <Field>
+                <FieldLabel htmlFor="password-confirmation">
+                  Confirmar Senha
+                </FieldLabel>
+                <Input
+                  id="password-confirmation"
+                  type="password"
+                  value={formPasswordConfirmation}
+                  onChange={(e) =>
+                    setFormPasswordConfirmation(e.target.value)
+                  }
+                  placeholder="Repita a senha"
+                  disabled={isSubmitting}
+                />
+              </Field>
+            )}
           </FieldGroup>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setFormDialogOpen(false)}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSave}>
-              {editingClient ? "Salvar" : "Criar"}
+            <Button onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting
+                ? "Salvando..."
+                : editingCustomer
+                  ? "Salvar"
+                  : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o cliente "
-              {clientToDelete?.nome}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o cliente &ldquo;
+              {customerToDelete?.name}&rdquo;? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              onClick={() => setClientToDelete(null)}
+              onClick={() => setCustomerToDelete(null)}
+              disabled={isDeleting}
             >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => {
-                toast.promise(
-                  new Promise((resolve) => setTimeout(resolve, 500)),
-                  {
-                    loading: `Excluindo ${clientToDelete?.nome}...`,
-                    success: "Cliente excluído",
-                    error: "Erro ao excluir",
-                  }
-                )
-                setClientToDelete(null)
-              }}
+              onClick={handleDelete}
+              disabled={isDeleting}
             >
-              Excluir
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

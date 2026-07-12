@@ -224,7 +224,7 @@ export function ProjectsTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem
-                onClick={() => navigate(`/projetos/${row.original.id}`)}
+                onClick={() => navigate(`/projects/${row.original.id}`)}
               >
                 Abrir
               </DropdownMenuItem>
@@ -450,7 +450,7 @@ export function ProjectsTable() {
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     className="cursor-pointer"
-                    onClick={() => navigate(`/projetos/${row.original.id}`)}
+                    onClick={() => navigate(`/projects/${row.original.id}`)}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell

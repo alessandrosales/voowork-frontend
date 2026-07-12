@@ -462,7 +462,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         <Button
           variant="ghost"
           className="self-start"
-          onClick={() => navigate("/projetos")}
+          onClick={() => navigate("/projects")}
         >
           <ArrowLeftIcon />
           <span>Voltar</span>
@@ -524,7 +524,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/projetos")}
+              onClick={() => navigate("/projects")}
             >
               <ArrowLeftIcon />
               <span>Voltar</span>

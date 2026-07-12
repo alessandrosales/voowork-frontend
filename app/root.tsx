@@ -11,11 +11,14 @@ import type { Route } from "./+types/root"
 import { TooltipProvider } from "~/components/ui/tooltip"
 import { ThemeProvider } from "~/components/shared/theme-provider"
 import { AuthProvider } from "~/hooks/use-auth"
+import { I18nextProvider } from "react-i18next"
+import i18n from "~/lib/i18n/config"
+import { LanguageProvider } from "~/lib/i18n/language-provider"
 import "./app.css"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -38,13 +41,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body suppressHydrationWarning>
-        <ThemeProvider defaultTheme="system" storageKey="pharmacy-ui-theme">
-          <TooltipProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </TooltipProvider>
-        </ThemeProvider>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider defaultTheme="system" storageKey="pharmacy-ui-theme">
+            <TooltipProvider>
+              <AuthProvider>
+                <LanguageProvider>
+                  {children}
+                </LanguageProvider>
+              </AuthProvider>
+            </TooltipProvider>
+          </ThemeProvider>
+        </I18nextProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

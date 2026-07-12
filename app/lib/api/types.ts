@@ -24,6 +24,19 @@ export interface User {
   updated_at: string
 }
 
+/* ---------- Customer ---------- */
+export interface Customer {
+  id: string
+  account_id: string
+  email: string
+  name: string
+  phone: string | null
+  status: "invited" | "active" | "inactive"
+  invited_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 /* ---------- Agent ---------- */
 export interface Agent {
   id: string

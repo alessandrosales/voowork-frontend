@@ -97,9 +97,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => navigate("/meus-dados")}>
+              <DropdownMenuItem onSelect={() => navigate("/profile")}>
                 <CircleUserRoundIcon />
-                Meus Dados
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {

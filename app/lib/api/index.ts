@@ -8,10 +8,12 @@ export { UnitsService } from "./units"
 export { ProductsService } from "./products"
 export { ProjectsService } from "./projects"
 export { TasksService } from "./tasks"
+export { CustomersService } from "./customers"
 
 export type {
   Account,
   User,
+  Customer,
   Agent,
   Conversation,
   ConversationWithMessages,
