@@ -12,18 +12,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "~/components/ui/sidebar"
 import {
-  UsersIcon,
-  TruckIcon,
-  PackageIcon,
-  Sprout,
-  ListIcon,
   UserCogIcon,
   BotIcon,
   LayoutDashboardIcon,
-  FileTextIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -31,46 +24,14 @@ import { useAuth } from "~/hooks/use-auth"
 const navData = {
   navPrimary: [
     {
-      title: "Notas Fiscais",
+      title: "Dashboard",
       url: "/",
-      icon: <FileTextIcon />,
+      icon: <LayoutDashboardIcon />,
     },
     {
       title: "Usuários",
       url: "/usuarios",
       icon: <UserCogIcon />,
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: <LayoutDashboardIcon />,
-    },
-    {
-      title: "Clientes",
-      url: "/clientes",
-      icon: <UsersIcon />,
-    },
-    {
-      title: "Fornecedores",
-      url: "/fornecedores",
-      icon: <TruckIcon />,
-    },
-    {
-      title: "Insumos",
-      url: "/insumos",
-      icon: <Sprout />,
-    },
-    {
-      title: "Estoque",
-      url: "/estoques",
-      icon: <PackageIcon />,
-    },
-    {
-      title: "Categorias",
-      url: "/categorias",
-      icon: <ListIcon />,
     },
     {
       title: "Agentes",
@@ -101,8 +62,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain title="Menu Principal" items={navData.navPrimary} />
-        <SidebarSeparator />
-        <NavMain title="Em Breve" items={navData.navSecondary} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

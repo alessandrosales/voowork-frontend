@@ -6,8 +6,7 @@ export { FarmsService } from "./farms"
 export { HarvestsService } from "./harvests"
 export { UnitsService } from "./units"
 export { ProductsService } from "./products"
-export { InvoiceTypesService } from "./invoice_types"
-export { InvoicesService } from "./invoices"
+
 export type {
   Account,
   User,
@@ -20,8 +19,6 @@ export type {
   Unit,
   Product,
   Company,
-  InvoiceType,
-  Invoice,
   PaginationMeta,
   PaginatedResponse,
   LoginRequest,
