@@ -6,6 +6,8 @@ export { FarmsService } from "./farms"
 export { HarvestsService } from "./harvests"
 export { UnitsService } from "./units"
 export { ProductsService } from "./products"
+export { ProjectsService } from "./projects"
+export { TasksService } from "./tasks"
 
 export type {
   Account,
@@ -19,6 +21,8 @@ export type {
   Unit,
   Product,
   Company,
+  Project,
+  Task,
   PaginationMeta,
   PaginatedResponse,
   LoginRequest,

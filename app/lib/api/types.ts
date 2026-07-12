@@ -170,6 +170,29 @@ export interface Company {
   updated_at: string
 }
 
+/* ---------- Project ---------- */
+export interface Project {
+  id: string
+  account_id: string
+  name: string
+  featured: boolean
+  tasks_count: number
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Task ---------- */
+export interface Task {
+  id: string
+  account_id: string
+  project_id: string
+  name: string
+  description: string | null
+  position: number
+  created_at: string
+  updated_at: string
+}
+
 /* ---------- Pagination ---------- */
 export interface PaginationMeta {
   page: number

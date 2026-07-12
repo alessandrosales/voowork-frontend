@@ -7,6 +7,8 @@ export default [
     route("usuarios", "routes/users.tsx"),
     route("clientes", "routes/clients.tsx"),
     route("fornecedores", "routes/suppliers.tsx"),
+    route("projetos", "routes/projetos.tsx"),
+    route("projetos/:id", "routes/projetos.$id.tsx"),
     route("agentes", "routes/agents.tsx"),
     route("insumos", "routes/supplies.tsx"),
     route("estoques", "routes/inventory.tsx"),

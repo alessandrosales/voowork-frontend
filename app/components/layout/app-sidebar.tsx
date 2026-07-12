@@ -17,6 +17,7 @@ import {
   UserCogIcon,
   BotIcon,
   LayoutDashboardIcon,
+  FolderKanbanIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -32,6 +33,11 @@ const navData = {
       title: "Usuários",
       url: "/usuarios",
       icon: <UserCogIcon />,
+    },
+    {
+      title: "Projetos",
+      url: "/projetos",
+      icon: <FolderKanbanIcon />,
     },
     {
       title: "Agentes",
@@ -51,6 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
+              size="lg"
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link to="/">
