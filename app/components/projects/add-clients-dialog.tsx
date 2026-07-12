@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { toast } from "sonner"
-import { UserIcon, UsersIcon, ExternalLinkIcon, MailIcon, PencilIcon, EyeIcon } from "lucide-react"
+import { UserIcon, UsersIcon, ExternalLinkIcon, PencilIcon, EyeIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "~/components/ui/button"
 import {
@@ -27,6 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
 import { ProjectsService, CustomersService, ApiError } from "~/lib/api"
 import type { Customer, ProjectCustomer } from "~/lib/api/types"
 
@@ -87,6 +97,35 @@ export function AddClientsDialog({
   const [updatingRoles, setUpdatingRoles] = React.useState<Set<string>>(
     new Set(),
   )
+
+  const [customerToDelete, setCustomerToDelete] =
+    React.useState<ProjectCustomer | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const handleDeleteCustomer = async () => {
+    if (!customerToDelete) return
+
+    setIsDeleting(true)
+    try {
+      await ProjectsService.deleteProjectCustomer(
+        projectId,
+        customerToDelete.id,
+      )
+      toast.success("Cliente removido do projeto.")
+      setDeleteConfirmOpen(false)
+      setCustomerToDelete(null)
+      fetchData()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "Erro ao remover cliente.")
+      } else {
+        toast.error("Erro de conexão.")
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const handleRoleChange = async (
     projectCustomerId: string,
@@ -248,14 +287,18 @@ export function AddClientsDialog({
                     <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                       <UserIcon className="size-3" />
                     </div>
-                    <div className="flex min-w-0 flex-1 items-baseline gap-1.5 truncate">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
                       <span className="truncate text-xs font-medium">
                         {customer?.name ?? "—"}
                       </span>
-                      <span className="flex shrink-0 items-center gap-0.5 truncate text-[0.625rem] text-muted-foreground">
-                        <MailIcon className="size-2.5 shrink-0" />
-                        {customer?.email ?? pc.customer_id}
-                      </span>
+                      {customer && (
+                        <Badge
+                          variant={STATUS_VARIANTS[customer.status] ?? "outline"}
+                          className="shrink-0 px-1.5 py-0 text-[0.625rem] leading-none"
+                        >
+                          {STATUS_LABELS[customer.status] ?? customer.status}
+                        </Badge>
+                      )}
                     </div>
                     <Select
                       value={pc.role}
@@ -282,20 +325,51 @@ export function AddClientsDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    {customer && (
-                      <Badge
-                        variant={STATUS_VARIANTS[customer.status] ?? "outline"}
-                        className="shrink-0 px-1.5 py-0 text-[0.625rem] leading-none"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerToDelete(pc)
+                          setDeleteConfirmOpen(true)
+                        }}
+                        className="ml-1 flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground/50 hover:text-destructive"
+                        title="Remover cliente"
                       >
-                        {STATUS_LABELS[customer.status] ?? customer.status}
-                      </Badge>
-                    )}
+                        <Trash2Icon className="size-3" />
+                      </button>
                   </div>
                 )
               })}
             </div>
           )}
         </div>
+
+        {/* Delete confirmation */}
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover cliente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover este cliente do projeto? Esta
+                ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => setCustomerToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleDeleteCustomer}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Removendo..." : "Remover"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Add new client form */}
         <form onSubmit={handleSubmit}>

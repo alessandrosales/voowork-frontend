@@ -10,6 +10,7 @@ import {
   ShieldIcon,
   PencilIcon,
   EyeIcon,
+  Trash2Icon,
 } from "lucide-react"
 
 import { Button } from "~/components/ui/button"
@@ -42,6 +43,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
 import { cn } from "~/lib/utils"
 import { ProjectsService, UsersService, ApiError } from "~/lib/api"
 import type { User, ProjectMember } from "~/lib/api/types"
@@ -91,6 +102,32 @@ export function AddMembersDialog({
   const [updatingRoles, setUpdatingRoles] = React.useState<Set<string>>(
     new Set(),
   )
+
+  const [memberToDelete, setMemberToDelete] =
+    React.useState<ProjectMember | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const handleDeleteMember = async () => {
+    if (!memberToDelete) return
+
+    setIsDeleting(true)
+    try {
+      await ProjectsService.deleteMember(projectId, memberToDelete.id)
+      toast.success("Membro removido do projeto.")
+      setDeleteConfirmOpen(false)
+      setMemberToDelete(null)
+      fetchData()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "Erro ao remover membro.")
+      } else {
+        toast.error("Erro de conexão.")
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const handleRoleChange = async (
     memberId: string,
@@ -294,6 +331,17 @@ export function AddMembersDialog({
                         )}
                       </SelectContent>
                     </Select>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberToDelete(member)
+                          setDeleteConfirmOpen(true)
+                        }}
+                        className="ml-1 flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground/50 hover:text-destructive"
+                        title="Remover membro"
+                      >
+                        <Trash2Icon className="size-3" />
+                      </button>
                   </div>
                 )
               })}
@@ -383,6 +431,34 @@ export function AddMembersDialog({
             </Popover>
           )}
         </div>
+
+        {/* Delete confirmation */}
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover membro</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover este membro do projeto? Esta
+                ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => setMemberToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleDeleteMember}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Removendo..." : "Remover"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <DialogFooter>
           <Button

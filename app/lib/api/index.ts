@@ -37,4 +37,5 @@ export type {
   ChangePasswordRequest,
   ChangePasswordResponse,
   ApiErrorBody,
+  ProjectRef,
 } from "./types"

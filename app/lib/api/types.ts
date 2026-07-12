@@ -20,6 +20,7 @@ export interface User {
   email: string
   phone: string | null
   preferred_language: "en" | "pt_br" | "es"
+  projects: ProjectRef[]
   created_at: string
   updated_at: string
 }
@@ -33,6 +34,7 @@ export interface Customer {
   phone: string | null
   status: "invited" | "active" | "inactive"
   invited_at: string | null
+  projects: ProjectRef[]
   created_at: string
   updated_at: string
 }
@@ -237,6 +239,12 @@ export interface PaginationMeta {
 export interface PaginatedResponse<T> {
   data: T[]
   meta: PaginationMeta
+}
+
+/* ---------- Project reference (embedded in User/Customer) ---------- */
+export interface ProjectRef {
+  id: string
+  name: string
 }
 
 /* ---------- Common ---------- */

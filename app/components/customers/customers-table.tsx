@@ -70,10 +70,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsRightIcon,
-  CircleCheckIcon,
-  XCircleIcon,
-  ClockIcon,
   SearchIcon,
+  CircleCheckIcon,
+  ClockIcon,
+  XCircleIcon,
 } from "lucide-react"
 
 import { CustomersService, ApiError } from "~/lib/api"
@@ -339,6 +339,36 @@ export function CustomersTable() {
             {row.original.phone || "—"}
           </div>
         ),
+      },
+      {
+        id: "projects",
+        header: "Projetos",
+        cell: ({ row }) => {
+          const projects = row.original.projects
+          if (!projects || projects.length === 0) return <span className="text-muted-foreground">—</span>
+
+          const visible = projects.slice(0, 2)
+          const remaining = projects.length - 2
+
+          return (
+            <div className="flex items-center gap-1 flex-wrap">
+              {visible.map((p) => (
+                <span
+                  key={p.id}
+                  className="truncate max-w-24 rounded-md bg-muted px-1.5 py-0.5 text-[0.625rem] text-muted-foreground"
+                >
+                  {p.name}
+                </span>
+              ))}
+              {remaining > 0 && (
+                <span className="text-[0.625rem] text-muted-foreground">
+                  +{remaining}
+                </span>
+              )}
+            </div>
+          )
+        },
+        enableSorting: false,
       },
       {
         accessorKey: "status",

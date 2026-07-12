@@ -50,6 +50,12 @@ export const ProjectsService = {
     )
   },
 
+  async deleteMember(projectId: string, memberId: string): Promise<void> {
+    return apiDelete(
+      `${PROJECTS_PATH}/${projectId}/members/${memberId}`,
+    )
+  },
+
   async updateMemberRole(
     projectId: string,
     memberId: string,
@@ -66,6 +72,15 @@ export const ProjectsService = {
   async listProjectCustomers(projectId: string): Promise<ProjectCustomer[]> {
     return apiGet<ProjectCustomer[]>(
       `${PROJECTS_PATH}/${projectId}/customers`,
+    )
+  },
+
+  async deleteProjectCustomer(
+    projectId: string,
+    projectCustomerId: string,
+  ): Promise<void> {
+    return apiDelete(
+      `${PROJECTS_PATH}/${projectId}/customers/${projectCustomerId}`,
     )
   },
 
