@@ -29,7 +29,7 @@ export class ApiError extends Error {
 
 /* ---------- Token management ---------- */
 
-const TOKEN_KEY = "agrojg-auth-token"
+const TOKEN_KEY = "voowork-auth-token"
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null

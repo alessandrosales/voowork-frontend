@@ -1,4 +1,4 @@
-# AGENTS.md — agrojg-frontend
+# AGENTS.md — voowork-frontend
 
 A pharmacy (farmácia) management SPA. Stack: React Router 7 (SPA mode) + shadcn/ui (Radix Mira) + Tailwind CSS v4 + TypeScript 6 + Vite 8.
 
@@ -362,4 +362,4 @@ app/lib/api/
 - This file is referenced as `instructions` in `opencode.jsonc`
 - Agent definitions are in `.opencode/agents/` (10 agents)
 - Skills in `.agents/skills/shadcn/`, `.agents/skills/tailwind-best-practices/`, `.agents/skills/tailwind-design-system/`
-- Agent system prompts reference "agrojg-frontend" (the template this was generated from)
+- Agent system prompts reference "voowork-frontend" (the template this was generated from)

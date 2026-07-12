@@ -9,12 +9,12 @@ export function Logo({ className }: LogoProps) {
     <>
       <img
         src="/logo.svg"
-        alt="AgroJG"
+        alt="Voowork"
         className={cn("hidden dark:block", className)}
       />
       <img
         src="/logo-dark.svg"
-        alt="AgroJG"
+        alt="Voowork"
         className={cn("block dark:hidden", className)}
       />
     </>

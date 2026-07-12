@@ -9,7 +9,7 @@ export default function LoginPage() {
         <a href="/" className="self-center">
           <img
             src="/logo.svg"
-            alt="AgroJG"
+            alt="Voowork"
             className="h-10 w-auto"
           />
         </a>
