@@ -79,7 +79,7 @@ export function ForgotPasswordForm({
             </div>
           </CardContent>
         </Card>
-        <FieldDescription className="px-6 text-center">
+      <FieldDescription className="px-6 text-center text-white">
           <Link to="/login" className="underline-offset-4 hover:underline">
             Voltar para o login
           </Link>

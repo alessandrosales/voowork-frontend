@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="/" className="self-center">
           <img
-            src="/logo.svg"
+            src="/logo-bg-dark.svg"
             alt="Voowork"
             className="h-10 w-auto"
           />

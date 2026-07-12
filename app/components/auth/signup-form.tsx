@@ -186,7 +186,7 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
+      <FieldDescription className="px-6 text-center text-white">
         Ao continuar, você concorda com nossos{" "}
         <a href="#" onClick={(e) => e.preventDefault()}>
           Termos de Serviço
