@@ -24,6 +24,8 @@ export type {
   Product,
   Company,
   Project,
+  ProjectMember,
+  ProjectCustomer,
   Task,
   PaginationMeta,
   PaginatedResponse,

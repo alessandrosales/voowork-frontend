@@ -183,6 +183,16 @@ export interface Company {
   updated_at: string
 }
 
+/* ---------- Project Member ---------- */
+export interface ProjectMember {
+  id: string
+  project_id: string
+  user_id: string
+  role: "owner" | "editor" | "viewer"
+  created_at: string
+  updated_at: string
+}
+
 /* ---------- Project ---------- */
 export interface Project {
   id: string
@@ -190,6 +200,16 @@ export interface Project {
   name: string
   featured: boolean
   tasks_count: number
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Project Customer (join table) ---------- */
+export interface ProjectCustomer {
+  id: string
+  customer_id: string
+  project_id: string
+  role: "editor" | "viewer"
   created_at: string
   updated_at: string
 }

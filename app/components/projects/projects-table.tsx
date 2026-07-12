@@ -72,10 +72,14 @@ import {
   ChevronsRightIcon,
   SearchIcon,
   StarIcon,
+  UserPlusIcon,
+  UserCheckIcon,
 } from "lucide-react"
 
 import { ProjectsService, ApiError } from "~/lib/api"
 import type { Project } from "~/lib/api/types"
+import { AddMembersDialog } from "~/components/projects/add-members-dialog"
+import { AddClientsDialog } from "~/components/projects/add-clients-dialog"
 
 export function ProjectsTable() {
   const navigate = useNavigate()
@@ -104,6 +108,16 @@ export function ProjectsTable() {
 
   const [formName, setFormName] = React.useState("")
   const [formFeatured, setFormFeatured] = React.useState(false)
+
+  // --- Add Member dialog ---
+  const [addMemberDialogOpen, setAddMemberDialogOpen] = React.useState(false)
+  const [projectToAddMember, setProjectToAddMember] =
+    React.useState<Project | null>(null)
+
+  // --- Add Client dialog ---
+  const [addClientDialogOpen, setAddClientDialogOpen] = React.useState(false)
+  const [projectToAddClient, setProjectToAddClient] =
+    React.useState<Project | null>(null)
 
   // --- Fetch data ---
   const fetchProjects = React.useCallback(() => {
@@ -224,17 +238,46 @@ export function ProjectsTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem
-                onClick={() => navigate(`/projects/${row.original.id}`)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/projects/${row.original.id}`)
+                }}
               >
                 Abrir
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openEditDialog(row.original)
+                }}
+              >
                 Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setProjectToAddMember(row.original)
+                  setAddMemberDialogOpen(true)
+                }}
+              >
+                <UserPlusIcon className="size-4" />
+                Adicionar Membros
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setProjectToAddClient(row.original)
+                  setAddClientDialogOpen(true)
+                }}
+              >
+                <UserCheckIcon className="size-4" />
+                Adicionar Clientes
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation()
                   setProjectToDelete(row.original)
                   setDeleteDialogOpen(true)
                 }}
@@ -657,6 +700,34 @@ export function ProjectsTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Member dialog */}
+      {projectToAddMember && (
+        <AddMembersDialog
+          projectId={projectToAddMember.id}
+          projectName={projectToAddMember.name}
+          open={addMemberDialogOpen}
+          onOpenChange={(open) => {
+            setAddMemberDialogOpen(open)
+            if (!open) setProjectToAddMember(null)
+          }}
+          onSuccess={fetchProjects}
+        />
+      )}
+
+      {/* Add Client dialog */}
+      {projectToAddClient && (
+        <AddClientsDialog
+          projectId={projectToAddClient.id}
+          projectName={projectToAddClient.name}
+          open={addClientDialogOpen}
+          onOpenChange={(open) => {
+            setAddClientDialogOpen(open)
+            if (!open) setProjectToAddClient(null)
+          }}
+          onSuccess={fetchProjects}
+        />
+      )}
     </div>
   )
 }
