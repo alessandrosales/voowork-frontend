@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root"
 import { TooltipProvider } from "~/components/ui/tooltip"
 import { ThemeProvider } from "~/components/shared/theme-provider"
+import { FaviconSync } from "~/components/shared/favicon-sync"
 import { AuthProvider } from "~/hooks/use-auth"
 import { I18nextProvider } from "react-i18next"
 import i18n from "~/lib/i18n/config"
@@ -34,6 +35,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
                   }
                   document.documentElement.classList.add(theme);
+                  var link = document.createElement("link");
+                  link.rel = "icon";
+                  link.href = theme === "dark" ? "/favicon-dark.ico" : "/favicon-light.ico";
+                  document.head.appendChild(link);
                 } catch(e) {}
               })();
             `,
@@ -43,6 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body suppressHydrationWarning>
         <I18nextProvider i18n={i18n}>
           <ThemeProvider defaultTheme="system" storageKey="pharmacy-ui-theme">
+            <FaviconSync />
             <TooltipProvider>
               <AuthProvider>
                 <LanguageProvider>
