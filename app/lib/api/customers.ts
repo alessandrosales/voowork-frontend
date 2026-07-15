@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { Customer } from "./types"
+import type { Customer, CustomerUserRef } from "./types"
 
 const CUSTOMERS_PATH = "/api/v1/customers"
 
@@ -40,4 +40,38 @@ export const CustomersService = {
   async delete(id: string): Promise<void> {
     return apiDelete(`${CUSTOMERS_PATH}/${id}`)
   },
+
+  // --- Customer Users ---
+
+  async listUsers(customerId: string): Promise<CustomerUserRef[]> {
+    return apiGet<CustomerUserRef[]>(`${CUSTOMERS_PATH}/${customerId}/users`)
+  },
+
+  async addUser(customerId: string, userId: string): Promise<CustomerUserRef> {
+    return apiPost<CustomerUserRef>(`${CUSTOMERS_PATH}/${customerId}/users`, {
+      customer_user: { user_id: userId },
+    })
+  },
+
+  async removeUser(customerId: string, userId: string): Promise<void> {
+    return apiDelete(`${CUSTOMERS_PATH}/${customerId}/users/${userId}`)
+  },
+
+  // --- Customer Projects ---
+
+  async listProjects(customerId: string): Promise<ProjectRef[]> {
+    return apiGet<ProjectRef[]>(`${CUSTOMERS_PATH}/${customerId}/projects`)
+  },
+
+  async addProject(customerId: string, projectId: string): Promise<ProjectRef> {
+    return apiPost<ProjectRef>(`${CUSTOMERS_PATH}/${customerId}/projects`, {
+      customer_project: { project_id: projectId },
+    })
+  },
+
+  async removeProject(customerId: string, projectId: string): Promise<void> {
+    return apiDelete(`${CUSTOMERS_PATH}/${customerId}/projects/${projectId}`)
+  },
 }
+
+type ProjectRef = { id: string; name: string }

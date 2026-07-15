@@ -15,6 +15,7 @@ export type {
   User,
   UserProfile,
   Customer,
+  CustomerUserRef,
   Agent,
   Conversation,
   ConversationWithMessages,

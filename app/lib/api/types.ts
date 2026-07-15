@@ -24,6 +24,7 @@ export interface User {
   profile: UserProfile
   preferred_language: "en" | "pt_br" | "es"
   projects: ProjectRef[]
+  managed_user_ids: string[]
   created_at: string
   updated_at: string
 }
@@ -38,8 +39,14 @@ export interface Customer {
   status: "invited" | "active" | "inactive"
   invited_at: string | null
   projects: ProjectRef[]
+  users: { id: string; name: string }[]
   created_at: string
   updated_at: string
+}
+
+export interface CustomerUserRef {
+  id: string
+  name: string
 }
 
 /* ---------- Agent ---------- */

@@ -4,7 +4,7 @@
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { User, UserProfile } from "./types"
+import type { User, UserProfile, ProjectMember } from "./types"
 
 const USERS_PATH = "/api/v1/users"
 
@@ -44,5 +44,49 @@ export const UsersService = {
 
   async delete(id: string): Promise<void> {
     return apiDelete(`${USERS_PATH}/${id}`)
+  },
+
+  // --- Managed users (gestor → usuários gerenciados) ---
+
+  async listManagedUsers(userId: string): Promise<User[]> {
+    return apiGet<User[]>(`${USERS_PATH}/${userId}/managed_users`)
+  },
+
+  async addManagedUser(userId: string, managedUserId: string): Promise<User> {
+    return apiPost<User>(`${USERS_PATH}/${userId}/managed_users`, {
+      managed_user: { managed_user_id: managedUserId },
+    })
+  },
+
+  async removeManagedUser(userId: string, managedUserId: string): Promise<void> {
+    return apiDelete(`${USERS_PATH}/${userId}/managed_users/${managedUserId}`)
+  },
+
+  // --- Project memberships (comum → projetos) ---
+
+  async listProjectMemberships(userId: string): Promise<ProjectMember[]> {
+    return apiGet<ProjectMember[]>(
+      `${USERS_PATH}/${userId}/project_memberships`,
+    )
+  },
+
+  async addProjectMembership(
+    userId: string,
+    projectId: string,
+    role?: string,
+  ): Promise<ProjectMember> {
+    return apiPost<ProjectMember>(
+      `${USERS_PATH}/${userId}/project_memberships`,
+      { project_membership: { project_id: projectId, role } },
+    )
+  },
+
+  async removeProjectMembership(
+    userId: string,
+    projectId: string,
+  ): Promise<void> {
+    return apiDelete(
+      `${USERS_PATH}/${userId}/project_memberships/${projectId}`,
+    )
   },
 }

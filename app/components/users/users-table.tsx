@@ -67,10 +67,14 @@ import {
   ChevronRightIcon,
   ChevronsRightIcon,
   SearchIcon,
+  ShieldIcon,
+  FolderIcon,
 } from "lucide-react"
 
 import { useAuth } from "~/hooks/use-auth"
 import { UsersService, ApiError } from "~/lib/api"
+import { ManageUsersDialog } from "~/components/users/manage-users-dialog"
+import { ManageUserProjectsDialog } from "~/components/users/manage-user-projects-dialog"
 import type { User, UserProfile } from "~/lib/api/types"
 
 const PROFILE_OPTIONS: {
@@ -79,7 +83,7 @@ const PROFILE_OPTIONS: {
   variant: "default" | "secondary" | "destructive"
 }[] = [
   { value: "common", label: "Comum", variant: "secondary" },
-  { value: "manager", label: "Gerente", variant: "default" },
+  { value: "manager", label: "Gestor", variant: "default" },
   { value: "admin", label: "Admin", variant: "default" },
 ]
 
@@ -117,6 +121,12 @@ export function UsersTable() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const [manageUsersDialogOpen, setManageUsersDialogOpen] = React.useState(false)
+  const [userToManage, setUserToManage] = React.useState<User | null>(null)
+
+  const [projectsDialogOpen, setProjectsDialogOpen] = React.useState(false)
+  const [userForProjects, setUserForProjects] = React.useState<User | null>(null)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingUser, setEditingUser] = React.useState<User | null>(null)
@@ -288,6 +298,28 @@ export function UsersTable() {
               <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
                 Editar
               </DropdownMenuItem>
+              {row.original.profile !== "admin" && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setUserForProjects(row.original)
+                    setProjectsDialogOpen(true)
+                  }}
+                >
+                  <FolderIcon className="size-4" />
+                  Vincular a Projetos
+                </DropdownMenuItem>
+              )}
+              {row.original.profile === "manager" && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setUserToManage(row.original)
+                    setManageUsersDialogOpen(true)
+                  }}
+                >
+                  <ShieldIcon className="size-4" />
+                  Gerenciar Usuários
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
@@ -757,6 +789,32 @@ export function UsersTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Manage Users dialog */}
+      {userToManage && (
+        <ManageUsersDialog
+          manager={userToManage}
+          open={manageUsersDialogOpen}
+          onOpenChange={(open) => {
+            setManageUsersDialogOpen(open)
+            if (!open) setUserToManage(null)
+          }}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      {/* Vincular a Projetos dialog */}
+      {userForProjects && (
+        <ManageUserProjectsDialog
+          user={userForProjects}
+          open={projectsDialogOpen}
+          onOpenChange={(open) => {
+            setProjectsDialogOpen(open)
+            if (!open) setUserForProjects(null)
+          }}
+          onSuccess={fetchUsers}
+        />
+      )}
     </div>
   )
 }
