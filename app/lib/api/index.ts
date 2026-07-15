@@ -13,7 +13,9 @@ export { CustomersService } from "./customers"
 export type {
   Account,
   User,
+  UserProfile,
   Customer,
+  CustomerUserRef,
   Agent,
   Conversation,
   ConversationWithMessages,

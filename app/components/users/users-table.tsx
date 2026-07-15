@@ -50,11 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "~/components/ui/field"
+import { Field, FieldGroup, FieldLabel } from "~/components/ui/field"
 import {
   Table,
   TableBody,
@@ -71,11 +67,32 @@ import {
   ChevronRightIcon,
   ChevronsRightIcon,
   SearchIcon,
+  ShieldIcon,
+  FolderIcon,
 } from "lucide-react"
 
 import { useAuth } from "~/hooks/use-auth"
 import { UsersService, ApiError } from "~/lib/api"
-import type { User } from "~/lib/api/types"
+import { ManageUsersDialog } from "~/components/users/manage-users-dialog"
+import { ManageUserProjectsDialog } from "~/components/users/manage-user-projects-dialog"
+import type { User, UserProfile } from "~/lib/api/types"
+
+const PROFILE_OPTIONS: {
+  value: UserProfile
+  label: string
+  variant: "default" | "secondary" | "destructive"
+}[] = [
+  { value: "common", label: "Comum", variant: "secondary" },
+  { value: "manager", label: "Gestor", variant: "default" },
+  { value: "admin", label: "Admin", variant: "default" },
+]
+
+function getProfileOption(
+  profile: unknown
+): (typeof PROFILE_OPTIONS)[number] | undefined {
+  if (typeof profile !== "string") return undefined
+  return PROFILE_OPTIONS.find((opt) => opt.value === profile)
+}
 
 function getInitials(name: string): string {
   return name
@@ -93,7 +110,7 @@ export function UsersTable() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
+    []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState({
@@ -105,14 +122,22 @@ export function UsersTable() {
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
+  const [manageUsersDialogOpen, setManageUsersDialogOpen] = React.useState(false)
+  const [userToManage, setUserToManage] = React.useState<User | null>(null)
+
+  const [projectsDialogOpen, setProjectsDialogOpen] = React.useState(false)
+  const [userForProjects, setUserForProjects] = React.useState<User | null>(null)
+
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingUser, setEditingUser] = React.useState<User | null>(null)
+  const isEditingSelf = editingUser?.id === currentUser?.id
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [formError, setFormError] = React.useState<string | null>(null)
 
   const [formName, setFormName] = React.useState("")
   const [formEmail, setFormEmail] = React.useState("")
   const [formPhone, setFormPhone] = React.useState("")
+  const [formProfile, setFormProfile] = React.useState<UserProfile>("common")
   const [formPassword, setFormPassword] = React.useState("")
   const [formPasswordConfirmation, setFormPasswordConfirmation] =
     React.useState("")
@@ -143,6 +168,7 @@ export function UsersTable() {
     setFormName("")
     setFormEmail("")
     setFormPhone("")
+    setFormProfile("common")
     setFormPassword("")
     setFormPasswordConfirmation("")
     setFormError(null)
@@ -154,6 +180,7 @@ export function UsersTable() {
     setFormName(user.name)
     setFormEmail(user.email)
     setFormPhone(user.phone ?? "")
+    setFormProfile(getProfileOption(user.profile)?.value ?? "common")
     setFormPassword("")
     setFormPasswordConfirmation("")
     setFormError(null)
@@ -171,7 +198,13 @@ export function UsersTable() {
           name: formName,
           email: formEmail,
           phone: formPhone || undefined,
-          ...(formPassword ? { password: formPassword, password_confirmation: formPasswordConfirmation } : {}),
+          ...(isEditingSelf ? {} : { profile: formProfile }),
+          ...(formPassword
+            ? {
+                password: formPassword,
+                password_confirmation: formPasswordConfirmation,
+              }
+            : {}),
         })
         toast.success("Usuário atualizado com sucesso.")
       } else {
@@ -189,6 +222,7 @@ export function UsersTable() {
           name: formName,
           email: formEmail,
           phone: formPhone || undefined,
+          profile: formProfile,
           password: formPassword,
           password_confirmation: formPasswordConfirmation,
         })
@@ -264,6 +298,28 @@ export function UsersTable() {
               <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
                 Editar
               </DropdownMenuItem>
+              {row.original.profile !== "admin" && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setUserForProjects(row.original)
+                    setProjectsDialogOpen(true)
+                  }}
+                >
+                  <FolderIcon className="size-4" />
+                  Vincular a Projetos
+                </DropdownMenuItem>
+              )}
+              {row.original.profile === "manager" && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setUserToManage(row.original)
+                    setManageUsersDialogOpen(true)
+                  }}
+                >
+                  <ShieldIcon className="size-4" />
+                  Gerenciar Usuários
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
@@ -310,21 +366,31 @@ export function UsersTable() {
         ),
       },
       {
+        accessorKey: "profile",
+        header: "Perfil",
+        cell: ({ row }) => {
+          const opt = getProfileOption(row.original.profile)
+          if (!opt) return <span className="text-muted-foreground">—</span>
+          return <Badge variant={opt.variant}>{opt.label}</Badge>
+        },
+      },
+      {
         id: "projects",
         header: "Projetos",
         cell: ({ row }) => {
           const projects = row.original.projects
-          if (!projects || projects.length === 0) return <span className="text-muted-foreground">—</span>
+          if (!projects || projects.length === 0)
+            return <span className="text-muted-foreground">—</span>
 
           const visible = projects.slice(0, 2)
           const remaining = projects.length - 2
 
           return (
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1">
               {visible.map((p) => (
                 <span
                   key={p.id}
-                  className="truncate max-w-24 rounded-md bg-muted px-1.5 py-0.5 text-[0.625rem] text-muted-foreground"
+                  className="max-w-24 truncate rounded-md bg-muted px-1.5 py-0.5 text-[0.625rem] text-muted-foreground"
                 >
                   {p.name}
                 </span>
@@ -341,9 +407,7 @@ export function UsersTable() {
       },
       {
         accessorKey: "created_at",
-        header: () => (
-          <div className="w-full text-right">Data de Criação</div>
-        ),
+        header: () => <div className="w-full text-right">Data de Criação</div>,
         cell: ({ row }) => (
           <div className="text-right text-muted-foreground">
             {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
@@ -351,7 +415,7 @@ export function UsersTable() {
         ),
       },
     ],
-    [],
+    []
   )
 
   const table = useReactTable({
@@ -402,9 +466,9 @@ export function UsersTable() {
     <div className="flex w-full flex-col gap-4">
       <div className="flex flex-col gap-4 px-4 lg:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
             <div className="relative w-full sm:max-w-sm">
-              <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome..."
                 value={
@@ -413,7 +477,7 @@ export function UsersTable() {
                 onChange={(event) =>
                   table.getColumn("name")?.setFilterValue(event.target.value)
                 }
-                className="pl-8 w-full h-8"
+                className="h-8 w-full pl-8"
               />
             </div>
           </div>
@@ -445,7 +509,7 @@ export function UsersTable() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             )}
                       </TableHead>
                     )
@@ -469,7 +533,7 @@ export function UsersTable() {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -491,13 +555,13 @@ export function UsersTable() {
       </div>
 
       <div className="flex flex-row items-center justify-between gap-2 px-4 lg:px-6">
-        <div className="flex items-center h-8 gap-2 text-muted-foreground whitespace-nowrap">
+        <div className="flex h-8 items-center gap-2 whitespace-nowrap text-muted-foreground">
           <span className="text-sm">
             {table.getFilteredRowModel().rows.length} registro(s)
           </span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4 flex-nowrap">
-          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-nowrap items-center gap-2 sm:gap-4">
+          <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
             <span>Linhas por página</span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
@@ -519,7 +583,7 @@ export function UsersTable() {
               </SelectContent>
             </Select>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
             <span>
               Página {table.getState().pagination.pageIndex + 1} de{" "}
               {table.getPageCount()}
@@ -629,8 +693,31 @@ export function UsersTable() {
               />
             </Field>
             <Field>
+              <FieldLabel htmlFor="profile">Perfil</FieldLabel>
+              <Select
+                value={formProfile}
+                onValueChange={(val) =>
+                  setFormProfile(val as UserProfile)
+                }
+                disabled={isSubmitting || isEditingSelf}
+              >
+                <SelectTrigger id="profile" className="w-full">
+                  <SelectValue placeholder="Selecione um perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFILE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field>
               <FieldLabel htmlFor="password">
-                {editingUser ? "Nova senha (deixe em branco para manter)" : "Senha"}
+                {editingUser
+                  ? "Nova senha (deixe em branco para manter)"
+                  : "Senha"}
               </FieldLabel>
               <Input
                 id="password"
@@ -652,9 +739,7 @@ export function UsersTable() {
                   id="password-confirmation"
                   type="password"
                   value={formPasswordConfirmation}
-                  onChange={(e) =>
-                    setFormPasswordConfirmation(e.target.value)
-                  }
+                  onChange={(e) => setFormPasswordConfirmation(e.target.value)}
                   placeholder="Repita a senha"
                   disabled={isSubmitting}
                 />
@@ -671,11 +756,7 @@ export function UsersTable() {
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Salvando..."
-                : editingUser
-                  ? "Salvar"
-                  : "Criar"}
+              {isSubmitting ? "Salvando..." : editingUser ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -687,8 +768,8 @@ export function UsersTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o usuário "
-              {userToDelete?.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o usuário "{userToDelete?.name}"?
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -708,6 +789,32 @@ export function UsersTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Manage Users dialog */}
+      {userToManage && (
+        <ManageUsersDialog
+          manager={userToManage}
+          open={manageUsersDialogOpen}
+          onOpenChange={(open) => {
+            setManageUsersDialogOpen(open)
+            if (!open) setUserToManage(null)
+          }}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      {/* Vincular a Projetos dialog */}
+      {userForProjects && (
+        <ManageUserProjectsDialog
+          user={userForProjects}
+          open={projectsDialogOpen}
+          onOpenChange={(open) => {
+            setProjectsDialogOpen(open)
+            if (!open) setUserForProjects(null)
+          }}
+          onSuccess={fetchUsers}
+        />
+      )}
     </div>
   )
 }

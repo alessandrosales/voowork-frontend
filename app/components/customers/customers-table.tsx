@@ -74,10 +74,14 @@ import {
   CircleCheckIcon,
   ClockIcon,
   XCircleIcon,
+  UserIcon,
+  FolderIcon,
 } from "lucide-react"
 
 import { CustomersService, ApiError } from "~/lib/api"
 import type { Customer } from "~/lib/api/types"
+import { ManageCustomerUsersDialog } from "~/components/customers/manage-customer-users-dialog"
+import { ManageCustomerProjectsDialog } from "~/components/customers/manage-customer-projects-dialog"
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Ativo" },
@@ -125,6 +129,14 @@ export function CustomersTable() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [customerToDelete, setCustomerToDelete] = React.useState<Customer | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const [usersDialogOpen, setUsersDialogOpen] = React.useState(false)
+  const [customerForUsers, setCustomerForUsers] =
+    React.useState<Customer | null>(null)
+
+  const [projectsDialogOpen, setProjectsDialogOpen] = React.useState(false)
+  const [customerForProjects, setCustomerForProjects] =
+    React.useState<Customer | null>(null)
 
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [editingCustomer, setEditingCustomer] = React.useState<Customer | null>(null)
@@ -299,6 +311,24 @@ export function CustomersTable() {
             <DropdownMenuContent align="end" className="w-32">
               <DropdownMenuItem onClick={() => openEditDialog(row.original)}>
                 Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setCustomerForUsers(row.original)
+                  setUsersDialogOpen(true)
+                }}
+              >
+                <UserIcon className="size-4" />
+                Gerenciar Usuários
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setCustomerForProjects(row.original)
+                  setProjectsDialogOpen(true)
+                }}
+              >
+                <FolderIcon className="size-4" />
+                Gerenciar Projetos
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -798,6 +828,32 @@ export function CustomersTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Manage Users dialog */}
+      {customerForUsers && (
+        <ManageCustomerUsersDialog
+          customer={customerForUsers}
+          open={usersDialogOpen}
+          onOpenChange={(open) => {
+            setUsersDialogOpen(open)
+            if (!open) setCustomerForUsers(null)
+          }}
+          onSuccess={fetchCustomers}
+        />
+      )}
+
+      {/* Manage Projects dialog */}
+      {customerForProjects && (
+        <ManageCustomerProjectsDialog
+          customer={customerForProjects}
+          open={projectsDialogOpen}
+          onOpenChange={(open) => {
+            setProjectsDialogOpen(open)
+            if (!open) setCustomerForProjects(null)
+          }}
+          onSuccess={fetchCustomers}
+        />
+      )}
     </div>
   )
 }

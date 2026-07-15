@@ -13,14 +13,18 @@ export interface Account {
 }
 
 /* ---------- User ---------- */
+export type UserProfile = "common" | "admin" | "manager"
+
 export interface User {
   id: string
   account_id: string
   name: string
   email: string
   phone: string | null
+  profile: UserProfile
   preferred_language: "en" | "pt_br" | "es"
   projects: ProjectRef[]
+  managed_user_ids: string[]
   created_at: string
   updated_at: string
 }
@@ -35,8 +39,14 @@ export interface Customer {
   status: "invited" | "active" | "inactive"
   invited_at: string | null
   projects: ProjectRef[]
+  users: { id: string; name: string }[]
   created_at: string
   updated_at: string
+}
+
+export interface CustomerUserRef {
+  id: string
+  name: string
 }
 
 /* ---------- Agent ---------- */

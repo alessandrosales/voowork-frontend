@@ -6,6 +6,8 @@ const ptBr = {
     customers: "Clientes",
     projects: "Projetos",
     agents: "Agentes",
+    reports: "Relatórios",
+    "activity-reports": "Relatórios de atividades",
   },
 } as const
 

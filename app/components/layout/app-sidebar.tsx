@@ -22,6 +22,8 @@ import {
   LayoutDashboardIcon,
   FolderKanbanIcon,
   UsersIcon,
+  ImageIcon,
+  FileTextIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -30,35 +32,67 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
   const { t } = useTranslation()
 
+  const isAdmin = user?.profile === "admin"
+
   const navPrimary = React.useMemo(
-    () => [
-      {
-        title: t("nav.dashboard"),
-        url: "/",
-        icon: <LayoutDashboardIcon />,
-      },
-      {
-        title: t("nav.users"),
-        url: "/users",
-        icon: <UserCogIcon />,
-      },
-      {
-        title: t("nav.customers"),
-        url: "/customers",
-        icon: <UsersIcon />,
-      },
-      {
-        title: t("nav.projects"),
-        url: "/projects",
-        icon: <FolderKanbanIcon />,
-      },
-      {
-        title: t("nav.agents"),
-        url: "/agents",
-        icon: <BotIcon />,
-      },
-    ],
-    [t],
+    () => {
+      const items: Array<{
+        title: string
+        url?: string
+        icon: React.ReactNode
+        children?: Array<{ title: string; url: string; icon: React.ReactNode }>
+      }> = [
+        {
+          title: t("nav.dashboard"),
+          url: "/",
+          icon: <LayoutDashboardIcon />,
+        },
+        {
+          title: t("nav.reports"),
+          icon: <FileTextIcon />,
+          children: [
+            {
+              title: "Screenshots",
+              url: "/screenshots",
+              icon: <ImageIcon />,
+            },
+            {
+              title: t("nav.activity-reports"),
+              url: "/activities",
+              icon: <FileTextIcon />,
+            },
+          ],
+        },
+      ]
+
+      if (isAdmin) {
+        items.push(
+          {
+            title: t("nav.users"),
+            url: "/users",
+            icon: <UserCogIcon />,
+          },
+          {
+            title: t("nav.customers"),
+            url: "/customers",
+            icon: <UsersIcon />,
+          },
+          {
+            title: t("nav.projects"),
+            url: "/projects",
+            icon: <FolderKanbanIcon />,
+          },
+          {
+            title: t("nav.agents"),
+            url: "/agents",
+            icon: <BotIcon />,
+          },
+        )
+      }
+
+      return items
+    },
+    [t, isAdmin],
   )
 
   return (
