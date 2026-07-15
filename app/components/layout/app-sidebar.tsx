@@ -22,6 +22,8 @@ import {
   LayoutDashboardIcon,
   FolderKanbanIcon,
   UsersIcon,
+  ImageIcon,
+  FileTextIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -36,6 +38,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: t("nav.dashboard"),
         url: "/",
         icon: <LayoutDashboardIcon />,
+      },
+      {
+        title: t("nav.reports"),
+        icon: <FileTextIcon />,
+        children: [
+          {
+            title: "Screenshots",
+            url: "/screenshots",
+            icon: <ImageIcon />,
+          },
+          {
+            title: t("nav.activity-reports"),
+            url: "/atividades",
+            icon: <FileTextIcon />,
+          },
+        ],
       },
       {
         title: t("nav.users"),

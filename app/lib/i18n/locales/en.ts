@@ -6,6 +6,8 @@ const en = {
     customers: "Customers",
     projects: "Projects",
     agents: "Agents",
+    reports: "Reports",
+    "activity-reports": "Activity Reports",
   },
 } as const
 
