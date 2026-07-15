@@ -13,6 +13,7 @@ export { CustomersService } from "./customers"
 export type {
   Account,
   User,
+  UserProfile,
   Customer,
   Agent,
   Conversation,

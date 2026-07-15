@@ -13,12 +13,15 @@ export interface Account {
 }
 
 /* ---------- User ---------- */
+export type UserProfile = "common" | "admin" | "manager"
+
 export interface User {
   id: string
   account_id: string
   name: string
   email: string
   phone: string | null
+  profile: UserProfile
   preferred_language: "en" | "pt_br" | "es"
   projects: ProjectRef[]
   created_at: string

@@ -4,7 +4,7 @@
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { User } from "./types"
+import type { User, UserProfile } from "./types"
 
 const USERS_PATH = "/api/v1/users"
 
@@ -23,6 +23,7 @@ export const UsersService = {
     password: string
     password_confirmation: string
     phone?: string
+    profile?: UserProfile
   }): Promise<User> {
     return apiPost<User>(USERS_PATH, { user: data })
   },
@@ -33,6 +34,7 @@ export const UsersService = {
       name: string
       email: string
       phone: string
+      profile: UserProfile
       password: string
       password_confirmation: string
     }>,
