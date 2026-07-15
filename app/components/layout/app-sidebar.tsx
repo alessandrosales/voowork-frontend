@@ -58,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
             {
               title: t("nav.activity-reports"),
-              url: "/atividades",
+              url: "/activities",
               icon: <FileTextIcon />,
             },
           ],
