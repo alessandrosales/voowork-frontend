@@ -9,6 +9,7 @@ export { ProductsService } from "./products"
 export { ProjectsService } from "./projects"
 export { TasksService } from "./tasks"
 export { CustomersService } from "./customers"
+export { ScreenshotsService } from "./screenshots"
 
 export type {
   Account,
@@ -40,4 +41,7 @@ export type {
   ChangePasswordResponse,
   ApiErrorBody,
   ProjectRef,
+  Screenshot,
+  ScreenshotFilters,
+  ScreenshotPeripheralEvents,
 } from "./types"

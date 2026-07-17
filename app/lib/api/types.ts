@@ -257,6 +257,37 @@ export interface ProjectRef {
   name: string
 }
 
+/* ---------- Screenshot ---------- */
+export interface ScreenshotPeripheralEvents {
+  [eventType: string]: number
+}
+
+export interface Screenshot {
+  id: string
+  tracking_id: string
+  path: string
+  original_id: string
+  captured_at: string
+  signed_url: string
+  user_id: string | null
+  user_name: string | null
+  user_initials: string | null
+  project_id: string | null
+  project_name: string | null
+  task_id: string | null
+  task_name: string | null
+  peripheral_events: ScreenshotPeripheralEvents
+  created_at: string
+  updated_at: string
+}
+
+export interface ScreenshotFilters {
+  user_id?: string
+  project_id?: string
+  captured_after?: string
+  captured_before?: string
+}
+
 /* ---------- Common ---------- */
 export interface ApiErrorBody {
   errors: Record<string, string[]>
