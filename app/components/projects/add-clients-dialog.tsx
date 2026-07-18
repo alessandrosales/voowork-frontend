@@ -177,7 +177,7 @@ export function AddClientsDialog({
 
     Promise.all([
       ProjectsService.listProjectCustomers(projectId)
-        .then(setProjectCustomers)
+        .then((res) => setProjectCustomers(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setCustomersError(err.message)
@@ -187,7 +187,7 @@ export function AddClientsDialog({
         })
         .finally(() => setLoadingCustomers(false)),
       CustomersService.list()
-        .then(setAllCustomers)
+        .then((res) => setAllCustomers(res.data))
         .catch(() => {
           // Silently fail — secondary data
         })

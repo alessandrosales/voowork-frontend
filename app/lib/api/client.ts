@@ -45,20 +45,25 @@ export function setToken(token: string | null): void {
   }
 }
 
+/* ---------- Types ---------- */
+
+type QueryParams = Record<string, string | number | undefined>
+
 /* ---------- Helpers ---------- */
 
 function getBaseUrl(): string {
   return import.meta.env.VITE_API_URL ?? ""
 }
 
-function buildUrl(path: string, params?: Record<string, string>): string {
+function buildUrl(path: string, params?: QueryParams): string {
   const base = getBaseUrl()
   // path starts with /, e.g. /api/v1/auth/login
   const url = new URL(`${base}${path}`, window.location.origin)
 
   if (params) {
     for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value)
+      if (value === undefined || value === null) continue
+      url.searchParams.set(key, String(value))
     }
   }
 
@@ -70,14 +75,14 @@ function buildUrl(path: string, params?: Record<string, string>): string {
 export async function apiPost<T>(
   path: string,
   body: unknown,
-  params?: Record<string, string>,
+  params?: QueryParams,
 ): Promise<T> {
   return request<T>("POST", path, { body, params })
 }
 
 export async function apiGet<T>(
   path: string,
-  params?: Record<string, string>,
+  params?: QueryParams,
 ): Promise<T> {
   return request<T>("GET", path, { params })
 }
@@ -99,7 +104,7 @@ export async function apiDelete<T = void>(
 
 interface RequestOptions {
   body?: unknown
-  params?: Record<string, string>
+  params?: QueryParams
 }
 
 async function request<T>(

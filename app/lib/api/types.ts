@@ -241,14 +241,21 @@ export interface Task {
 /* ---------- Pagination ---------- */
 export interface PaginationMeta {
   page: number
-  per_page: number
-  total_count: number
-  total_pages: number
+  limit: number
+  pages: number
+  count: number
+  prev: number | null
+  next: number | null
 }
 
 export interface PaginatedResponse<T> {
   data: T[]
-  meta: PaginationMeta
+  pagination: PaginationMeta
+}
+
+export interface PaginationParams {
+  page?: number
+  limit?: number
 }
 
 /* ---------- Project reference (embedded in User/Customer) ---------- */

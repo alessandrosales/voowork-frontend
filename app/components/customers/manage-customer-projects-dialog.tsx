@@ -93,7 +93,7 @@ export function ManageCustomerProjectsDialog({
 
     Promise.all([
       CustomersService.listProjects(customer.id)
-        .then(setCustomerProjects)
+        .then((res) => setCustomerProjects(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setProjectsError(err.message)

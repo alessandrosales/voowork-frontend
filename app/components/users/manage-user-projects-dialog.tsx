@@ -125,7 +125,7 @@ export function ManageUserProjectsDialog({
 
     Promise.all([
       UsersService.listProjectMemberships(user.id)
-        .then(setMemberships)
+        .then((res) => setMemberships(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setMembershipsError(err.message)

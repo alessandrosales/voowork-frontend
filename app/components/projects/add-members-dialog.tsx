@@ -189,7 +189,7 @@ export function AddMembersDialog({
 
     Promise.all([
       ProjectsService.listMembers(projectId)
-        .then(setMembers)
+        .then((res) => setMembers(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setMembersError(err.message)
@@ -199,7 +199,7 @@ export function AddMembersDialog({
         })
         .finally(() => setLoadingMembers(false)),
       UsersService.list()
-        .then(setUsers)
+        .then((res) => setUsers(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setUsersError(err.message)

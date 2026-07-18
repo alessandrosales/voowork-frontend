@@ -147,7 +147,7 @@ export function UsersTable() {
     setIsLoading(true)
     setError(null)
     UsersService.list()
-      .then(setData)
+      .then((res) => setData(res.data))
       .catch((err) => {
         if (err instanceof ApiError) {
           setError(err.message)

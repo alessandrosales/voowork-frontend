@@ -1,11 +1,13 @@
 import { apiGet } from "./client"
-import type { Screenshot, ScreenshotFilters } from "./types"
+import type { PaginatedResponse, Screenshot, ScreenshotFilters } from "./types"
 
 const SCREENSHOTS_PATH = "/api/v1/screenshots"
 
 export const ScreenshotsService = {
-  async list(filters?: ScreenshotFilters): Promise<Screenshot[]> {
-    const params: Record<string, string> = {}
+  async list(
+    filters?: ScreenshotFilters & { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<Screenshot>> {
+    const params: Record<string, string | number | undefined> = {}
 
     if (filters) {
       if (filters.user_id && filters.user_id !== "all") {
@@ -20,8 +22,14 @@ export const ScreenshotsService = {
       if (filters.captured_before) {
         params["captured_before"] = filters.captured_before
       }
+      if (filters.page) {
+        params["page"] = filters.page
+      }
+      if (filters.limit) {
+        params["limit"] = filters.limit
+      }
     }
 
-    return apiGet<Screenshot[]>(SCREENSHOTS_PATH, params)
+    return apiGet<PaginatedResponse<Screenshot>>(SCREENSHOTS_PATH, params)
   },
 }

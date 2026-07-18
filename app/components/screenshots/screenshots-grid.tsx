@@ -50,30 +50,6 @@ function groupByHour(screenshots: Screenshot[]): HourGroup[] {
 /*  Componentes                                                       */
 /* ------------------------------------------------------------------ */
 
-function PeripheralBadges({
-  events,
-}: {
-  events: Record<string, number>
-}) {
-  const labels: Record<string, string> = {
-    mouse_activity: "Mouse",
-    keyboard_activity: "Teclado",
-  }
-
-  const entries = Object.entries(events)
-  if (entries.length === 0) return null
-
-  return (
-    <div className="flex gap-2 text-[10px] text-muted-foreground">
-      {entries.map(([type, count]) => (
-        <span key={type}>
-          {labels[type] || type}: {count}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 function getInitial(name: string | null): string {
   if (!name) return "?"
   return name.charAt(0).toUpperCase()
@@ -189,16 +165,13 @@ export function ScreenshotsGrid({
                         captured_at={screenshot.captured_at}
                       />
                       <CardHeader className="px-2.5 py-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="truncate text-xs font-medium">
-                              {screenshot.user_name}
-                            </CardTitle>
-                            <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-                              {formatTimestamp(screenshot.captured_at)}
-                            </span>
-                          </div>
-                          <PeripheralBadges events={screenshot.peripheral_events} />
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="truncate text-xs font-medium">
+                            {screenshot.user_name}
+                          </CardTitle>
+                          <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                            {formatTimestamp(screenshot.captured_at)}
+                          </span>
                         </div>
                       </CardHeader>
                     </Card>

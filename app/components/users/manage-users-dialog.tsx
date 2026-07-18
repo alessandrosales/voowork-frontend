@@ -100,7 +100,7 @@ export function ManageUsersDialog({
 
     Promise.all([
       UsersService.listManagedUsers(manager.id)
-        .then(setManagedUsers)
+        .then((res) => setManagedUsers(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setManagedError(err.message)
@@ -110,7 +110,7 @@ export function ManageUsersDialog({
         })
         .finally(() => setLoadingManaged(false)),
       UsersService.list()
-        .then(setAllUsers)
+        .then((res) => setAllUsers(res.data))
         .catch(() => {})
         .finally(() => setLoadingAll(false)),
     ])

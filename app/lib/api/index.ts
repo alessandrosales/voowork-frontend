@@ -32,6 +32,7 @@ export type {
   Task,
   PaginationMeta,
   PaginatedResponse,
+  PaginationParams,
   LoginRequest,
   LoginResponse,
   RegisterRequest,

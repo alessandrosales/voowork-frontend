@@ -156,7 +156,7 @@ export function CustomersTable() {
     setIsLoading(true)
     setError(null)
     CustomersService.list()
-      .then(setData)
+      .then((res) => setData(res.data))
       .catch((err) => {
         if (err instanceof ApiError) {
           setError(err.message)
