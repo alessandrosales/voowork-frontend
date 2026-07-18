@@ -12,38 +12,67 @@ import type { Screenshot } from "~/lib/api/types"
 import { ScreenshotDialog } from "./screenshot-dialog"
 
 /* ------------------------------------------------------------------ */
-/*  Tipos internos para o grid agrupado por hora                      */
+/*  Tipos internos para o grid agrupado por dia + hora                */
 /* ------------------------------------------------------------------ */
 
 export interface HourGroup {
+  key: string
+  date: string
   hour: number
   label: string
   screenshots: Screenshot[]
 }
 
 /* ------------------------------------------------------------------ */
-/*  Agrupamento por hora                                              */
+/*  Helpers de data                                                   */
+/* ------------------------------------------------------------------ */
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+}
+
+function dateKey(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+/* ------------------------------------------------------------------ */
+/*  Agrupamento por dia + hora                                        */
 /* ------------------------------------------------------------------ */
 
 function groupByHour(screenshots: Screenshot[]): HourGroup[] {
-  const groups = new Map<number, HourGroup>()
+  const groups = new Map<string, HourGroup>()
 
   for (const s of screenshots) {
     const date = new Date(s.captured_at)
     const hour = date.getHours()
+    const dayKey = dateKey(s.captured_at)
+    const key = `${dayKey}-${hour}`
 
-    if (!groups.has(hour)) {
-      groups.set(hour, {
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        date: formatDate(s.captured_at),
         hour,
         label: `${String(hour).padStart(2, "0")}:00 — ${String(hour).padStart(2, "0")}:59`,
         screenshots: [],
       })
     }
 
-    groups.get(hour)!.screenshots.push(s)
+    groups.get(key)!.screenshots.push(s)
   }
 
-  return Array.from(groups.values()).sort((a, b) => b.hour - a.hour)
+  return Array.from(groups.values()).sort((a, b) => {
+    // Sort by date descending, then by hour descending
+    const dateCmp = b.key.localeCompare(a.key)
+    if (dateCmp !== 0) return dateCmp
+    return b.hour - a.hour
+  })
 }
 
 /* ------------------------------------------------------------------ */
@@ -140,9 +169,11 @@ export function ScreenshotsGrid({
     <>
       <div className="flex flex-col gap-8">
         {groups.map((group) => (
-          <div key={group.hour}>
-            <h2 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {group.label}
+          <div key={group.key}>
+            <h2 className="mb-4 text-sm font-semibold text-muted-foreground">
+              <span className="tabular-nums">{group.date}</span>
+              <span className="mx-1.5">•</span>
+              <span>{group.label}</span>
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {group.screenshots.map((screenshot) => {
