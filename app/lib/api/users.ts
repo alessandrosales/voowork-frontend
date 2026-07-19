@@ -20,6 +20,14 @@ export const UsersService = {
     return apiGet<PaginatedResponse<User>>(USERS_PATH, params)
   },
 
+  /** Retorna todos os usuários sem paginação — para selects/dropdowns */
+  async listAll(): Promise<User[]> {
+    const res = await apiGet<{ data: User[] }>(USERS_PATH, {
+      paginate: "false",
+    })
+    return res.data
+  },
+
   async get(id: string): Promise<User> {
     return apiGet<User>(`${USERS_PATH}/${id}`)
   },
