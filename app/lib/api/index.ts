@@ -10,6 +10,7 @@ export { ProjectsService } from "./projects"
 export { TasksService } from "./tasks"
 export { CustomersService } from "./customers"
 export { ScreenshotsService } from "./screenshots"
+export { ReportsService } from "./reports"
 
 export type {
   Account,
@@ -45,4 +46,15 @@ export type {
   Screenshot,
   ScreenshotFilters,
   ScreenshotPeripheralEvents,
+  ProjectTimeEntry,
+  ProjectTimeResponse,
+  TimelineBlock,
+  TimelineDay,
+  TimelineResponse,
+  TaskTimeTask,
+  TaskTimeProject,
+  TaskTimeResponse,
+  UserTimeEntry,
+  UserTimeUser,
+  UserTimeResponse,
 } from "./types"

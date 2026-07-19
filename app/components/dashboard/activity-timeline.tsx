@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { Badge } from "~/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -168,7 +169,8 @@ function TimelineCell({
             className={`absolute top-0 h-full rounded-sm ${activities[segment.type]?.color ?? "bg-foreground/20"}`}
             style={{
               left: `${left}%`,
-              width: `${Math.max(width, 0.3)}%`,
+              width: `${Math.max(width, 2)}%`,
+              minWidth: "14px",
             }}
           />
         )
@@ -216,10 +218,17 @@ export function ActivityTimeline({
               {days.map((day) => (
                 <TableRow
                   key={day.date}
-                  className={`group ${day.isWeekend ? "text-destructive" : ""}`}
+                  className={`group ${day.isWeekend ? "opacity-60" : ""}`}
                 >
                   <TableCell className="w-[88px] px-2 whitespace-nowrap">
-                    {day.dayLabel}
+                    <span className="flex items-center gap-2">
+                      {day.dayLabel}
+                      {day.isWeekend && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 leading-none font-normal">
+                          Fim de semana
+                        </Badge>
+                      )}
+                    </span>
                   </TableCell>
                   <TableCell className="w-[84px] px-2 whitespace-nowrap">
                     {day.timeWorked}
