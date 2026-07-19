@@ -39,32 +39,30 @@ function formatDuration(totalSeconds: number): string {
 
 function TaskRows({ tasks }: { tasks: TaskTimeTask[] }) {
   return (
-    <div className="pl-6">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="py-1 text-xs">Task</TableHead>
-            <TableHead className="py-1 text-right text-xs">Tempo</TableHead>
-            <TableHead className="py-1 text-right text-xs">Trackings</TableHead>
+    <Table className="table-fixed">
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="w-[50%] py-1 text-xs">Task</TableHead>
+          <TableHead className="w-[30%] py-1 text-right text-xs">Tempo</TableHead>
+          <TableHead className="w-[20%] py-1 text-right text-xs">Trackings</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {tasks.map((task) => (
+          <TableRow key={task.task_id}>
+            <TableCell className="py-1.5 text-sm truncate">
+              {task.task_name}
+            </TableCell>
+            <TableCell className="py-1.5 text-right tabular-nums text-sm">
+              {formatDuration(task.total_seconds)}
+            </TableCell>
+            <TableCell className="py-1.5 text-right tabular-nums text-sm text-muted-foreground">
+              {task.trackings_count}
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.task_id}>
-              <TableCell className="py-1.5 text-sm">
-                {task.task_name}
-              </TableCell>
-              <TableCell className="py-1.5 text-right tabular-nums text-sm">
-                {formatDuration(task.total_seconds)}
-              </TableCell>
-              <TableCell className="py-1.5 text-right tabular-nums text-sm text-muted-foreground">
-                {task.trackings_count}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+        ))}
+      </TableBody>
+    </Table>
   )
 }
 
@@ -73,13 +71,13 @@ function TaskRows({ tasks }: { tasks: TaskTimeTask[] }) {
 function ProjectGroup({ project }: { project: TaskTimeProject }) {
   return (
     <Collapsible defaultOpen>
-      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-lg border px-4 py-3 text-left hover:bg-muted/50 data-[state=open]:rounded-b-none data-[state=open]:border-b-0">
+      <CollapsibleTrigger className="group flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left hover:bg-muted/50 data-[state=open]:rounded-b-none data-[state=open]:border-b-0">
         <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-        <span className="flex-1 font-medium">{project.project_name}</span>
-        <span className="tabular-nums text-sm text-muted-foreground">
+        <span className="w-[50%] font-medium truncate">{project.project_name}</span>
+        <span className="w-[30%] text-right tabular-nums text-sm text-muted-foreground">
           {formatDuration(project.total_seconds)}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="w-[20%] text-right text-xs text-muted-foreground">
           {project.tasks_count} {project.tasks_count === 1 ? "task" : "tasks"}
         </span>
       </CollapsibleTrigger>
