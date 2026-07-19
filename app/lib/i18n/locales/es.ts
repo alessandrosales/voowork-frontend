@@ -7,7 +7,10 @@ const es = {
     projects: "Proyectos",
     agents: "Agentes",
     reports: "Informes",
-    "activity-reports": "Informes de Actividad",
+    "project-time": "Tiempo por Proyecto",
+    timeline: "Línea de Tiempo",
+    "task-time": "Tiempo por Tarea",
+    "user-time": "Tiempo por Usuario",
   },
 } as const
 

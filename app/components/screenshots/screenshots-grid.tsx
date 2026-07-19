@@ -1,203 +1,226 @@
+"use client"
+
+import { useState } from "react"
+
 import {
   Card,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
 
-export interface ScreenshotItem {
-  id: string
-  user: string
-  initials: string
-  timestamp: string
-  hour: number
-  thumbnailBg: string
-}
+import type { Screenshot } from "~/lib/api/types"
+import { ScreenshotDialog } from "./screenshot-dialog"
 
-interface HourGroup {
+/* ------------------------------------------------------------------ */
+/*  Tipos internos para o grid agrupado por dia + hora                */
+/* ------------------------------------------------------------------ */
+
+export interface HourGroup {
+  key: string
+  date: string
   hour: number
   label: string
-  screenshots: ScreenshotItem[]
+  screenshots: Screenshot[]
 }
 
-interface ScreenshotsGridProps {
-  groups?: HourGroup[]
+/* ------------------------------------------------------------------ */
+/*  Helpers de data                                                   */
+/* ------------------------------------------------------------------ */
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
 }
 
-const MOCK_GROUPS: HourGroup[] = [
-  {
-    hour: 10,
-    label: "10:00 — 10:59",
-    screenshots: [
-      {
-        id: "1",
-        user: "Ana Silva",
-        initials: "AS",
-        timestamp: "10:32",
-        hour: 10,
-        thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-      },
-      {
-        id: "2",
-        user: "Carlos Oliveira",
-        initials: "CO",
-        timestamp: "10:28",
-        hour: 10,
-        thumbnailBg: "from-blue-500/20 to-blue-600/10",
-      },
-      {
-        id: "3",
-        user: "Marina Costa",
-        initials: "MC",
-        timestamp: "10:25",
-        hour: 10,
-        thumbnailBg: "from-violet-500/20 to-violet-600/10",
-      },
-      {
-        id: "4",
-        user: "Rafael Santos",
-        initials: "RS",
-        timestamp: "10:22",
-        hour: 10,
-        thumbnailBg: "from-amber-500/20 to-amber-600/10",
-      },
-      {
-        id: "5",
-        user: "Juliana Lima",
-        initials: "JL",
-        timestamp: "10:18",
-        hour: 10,
-        thumbnailBg: "from-rose-500/20 to-rose-600/10",
-      },
-      {
-        id: "6",
-        user: "Ana Silva",
-        initials: "AS",
-        timestamp: "10:05",
-        hour: 10,
-        thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-      },
-    ],
-  },
-  {
-    hour: 9,
-    label: "09:00 — 09:59",
-    screenshots: [
-      {
-        id: "7",
-        user: "Carlos Oliveira",
-        initials: "CO",
-        timestamp: "09:52",
-        hour: 9,
-        thumbnailBg: "from-blue-500/20 to-blue-600/10",
-      },
-      {
-        id: "8",
-        user: "Marina Costa",
-        initials: "MC",
-        timestamp: "09:45",
-        hour: 9,
-        thumbnailBg: "from-violet-500/20 to-violet-600/10",
-      },
-      {
-        id: "9",
-        user: "Rafael Santos",
-        initials: "RS",
-        timestamp: "09:30",
-        hour: 9,
-        thumbnailBg: "from-amber-500/20 to-amber-600/10",
-      },
-      {
-        id: "10",
-        user: "Ana Silva",
-        initials: "AS",
-        timestamp: "09:15",
-        hour: 9,
-        thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-      },
-      {
-        id: "11",
-        user: "Juliana Lima",
-        initials: "JL",
-        timestamp: "09:08",
-        hour: 9,
-        thumbnailBg: "from-rose-500/20 to-rose-600/10",
-      },
-    ],
-  },
-  {
-    hour: 8,
-    label: "08:00 — 08:59",
-    screenshots: [
-      {
-        id: "12",
-        user: "Carlos Oliveira",
-        initials: "CO",
-        timestamp: "08:45",
-        hour: 8,
-        thumbnailBg: "from-blue-500/20 to-blue-600/10",
-      },
-      {
-        id: "13",
-        user: "Ana Silva",
-        initials: "AS",
-        timestamp: "08:30",
-        hour: 8,
-        thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-      },
-    ],
-  },
-]
+function dateKey(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+/* ------------------------------------------------------------------ */
+/*  Agrupamento por dia + hora                                        */
+/* ------------------------------------------------------------------ */
+
+function groupByHour(screenshots: Screenshot[]): HourGroup[] {
+  const groups = new Map<string, HourGroup>()
+
+  for (const s of screenshots) {
+    const date = new Date(s.captured_at)
+    const hour = date.getHours()
+    const dayKey = dateKey(s.captured_at)
+    const key = `${dayKey}-${hour}`
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        date: formatDate(s.captured_at),
+        hour,
+        label: `${String(hour).padStart(2, "0")}:00 — ${String(hour).padStart(2, "0")}:59`,
+        screenshots: [],
+      })
+    }
+
+    groups.get(key)!.screenshots.push(s)
+  }
+
+  return Array.from(groups.values()).sort((a, b) => {
+    // Sort by date descending, then by hour descending
+    const dateCmp = b.key.localeCompare(a.key)
+    if (dateCmp !== 0) return dateCmp
+    return b.hour - a.hour
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Componentes                                                       */
+/* ------------------------------------------------------------------ */
+
+function getInitial(name: string | null): string {
+  if (!name) return "?"
+  return name.charAt(0).toUpperCase()
+}
+
+function formatTimestamp(iso: string): string {
+  const date = new Date(iso)
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
+}
 
 function ScreenshotThumbnail({
-  initials,
-  bg,
+  signed_url,
+  user_name,
+  captured_at,
 }: {
-  initials: string
-  bg: string
+  signed_url: string
+  user_name: string | null
+  captured_at: string
 }) {
   return (
-    <div
-      className={`flex aspect-[4/3] items-center justify-center rounded-t-md bg-gradient-to-br ${bg}`}
-    >
-      <div className="flex size-8 items-center justify-center rounded-full bg-background/80 text-xs font-medium text-foreground shadow-xs">
-        {initials}
-      </div>
+    <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-t-md bg-muted">
+      {signed_url ? (
+        <img
+          src={signed_url}
+          alt={`Screenshot - ${user_name ?? "desconhecido"} - ${captured_at}`}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="flex size-8 items-center justify-center rounded-full bg-background/80 text-xs font-medium text-foreground shadow-xs">
+          {getInitial(user_name)}
+        </div>
+      )}
     </div>
   )
 }
 
+/* ------------------------------------------------------------------ */
+/*  Props                                                             */
+/* ------------------------------------------------------------------ */
+
+interface ScreenshotsGridProps {
+  screenshots?: Screenshot[]
+  isLoading?: boolean
+  error?: string | null
+}
+
 export function ScreenshotsGrid({
-  groups = MOCK_GROUPS,
+  screenshots,
+  isLoading,
+  error,
 }: ScreenshotsGridProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogIndex, setDialogIndex] = useState<number | null>(null)
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        Carregando screenshots...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    )
+  }
+
+  if (!screenshots || screenshots.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        Nenhum screenshot encontrado.
+      </div>
+    )
+  }
+
+  const groups = groupByHour(screenshots)
+
+  function handleCardClick(index: number) {
+    setDialogIndex(index)
+    setDialogOpen(true)
+  }
+
   return (
-    <div className="flex flex-col gap-8">
-      {groups.map((group) => (
-        <div key={group.hour}>
-          <h2 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {group.label}
-          </h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {group.screenshots.map((screenshot) => (
-              <Card key={screenshot.id} size="sm" className="overflow-hidden pt-0 pb-0 gap-0">
-                <ScreenshotThumbnail
-                  initials={screenshot.initials}
-                  bg={screenshot.thumbnailBg}
-                />
-                <CardHeader className="px-2.5 py-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-medium truncate">
-                      {screenshot.user}
-                    </CardTitle>
-                    <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-                      {screenshot.timestamp}
-                    </span>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+    <>
+      <div className="flex flex-col gap-8">
+        {groups.map((group) => (
+          <div key={group.key}>
+            <h2 className="mb-4 text-sm font-semibold text-muted-foreground">
+              <span className="tabular-nums">{group.date}</span>
+              <span className="mx-1.5">•</span>
+              <span>{group.label}</span>
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {group.screenshots.map((screenshot) => {
+                // Find the global index in the flat screenshots array
+                const globalIndex = screenshots.indexOf(screenshot)
+                return (
+                  <button
+                    key={screenshot.id}
+                    type="button"
+                    onClick={() => handleCardClick(globalIndex)}
+                    className="block text-left cursor-pointer"
+                  >
+                    <Card
+                      size="sm"
+                      className="overflow-hidden pt-0 pb-0 gap-0 transition-shadow hover:shadow-md"
+                    >
+                      <ScreenshotThumbnail
+                        signed_url={screenshot.signed_url}
+                        user_name={screenshot.user_name}
+                        captured_at={screenshot.captured_at}
+                      />
+                      <CardHeader className="px-2.5 py-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="truncate text-xs font-medium">
+                            {screenshot.user_name}
+                          </CardTitle>
+                          <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                            {formatTimestamp(screenshot.captured_at)}
+                          </span>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      <ScreenshotDialog
+        screenshots={screenshots}
+        currentIndex={dialogIndex}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onIndexChange={setDialogIndex}
+      />
+    </>
   )
 }

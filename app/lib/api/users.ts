@@ -4,13 +4,28 @@
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { User, UserProfile, ProjectMember } from "./types"
+import type {
+  User,
+  UserProfile,
+  ProjectMember,
+  PaginatedResponse,
+} from "./types"
 
 const USERS_PATH = "/api/v1/users"
 
 export const UsersService = {
-  async list(): Promise<User[]> {
-    return apiGet<User[]>(USERS_PATH)
+  async list(
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<User>> {
+    return apiGet<PaginatedResponse<User>>(USERS_PATH, params)
+  },
+
+  /** Retorna todos os usuários sem paginação — para selects/dropdowns */
+  async listAll(): Promise<User[]> {
+    const res = await apiGet<{ data: User[] }>(USERS_PATH, {
+      paginate: "false",
+    })
+    return res.data
   },
 
   async get(id: string): Promise<User> {
@@ -48,8 +63,14 @@ export const UsersService = {
 
   // --- Managed users (gestor → usuários gerenciados) ---
 
-  async listManagedUsers(userId: string): Promise<User[]> {
-    return apiGet<User[]>(`${USERS_PATH}/${userId}/managed_users`)
+  async listManagedUsers(
+    userId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<User>> {
+    return apiGet<PaginatedResponse<User>>(
+      `${USERS_PATH}/${userId}/managed_users`,
+      params,
+    )
   },
 
   async addManagedUser(userId: string, managedUserId: string): Promise<User> {
@@ -64,9 +85,13 @@ export const UsersService = {
 
   // --- Project memberships (comum → projetos) ---
 
-  async listProjectMemberships(userId: string): Promise<ProjectMember[]> {
-    return apiGet<ProjectMember[]>(
+  async listProjectMemberships(
+    userId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<ProjectMember>> {
+    return apiGet<PaginatedResponse<ProjectMember>>(
       `${USERS_PATH}/${userId}/project_memberships`,
+      params,
     )
   },
 

@@ -89,7 +89,7 @@ export function ManageCustomerUsersDialog({
 
     Promise.all([
       CustomersService.listUsers(customer.id)
-        .then(setCustomerUsers)
+        .then((res) => setCustomerUsers(res.data))
         .catch((err) => {
           if (err instanceof ApiError) {
             setUsersError(err.message)
@@ -99,8 +99,8 @@ export function ManageCustomerUsersDialog({
         })
         .finally(() => setLoadingUsers(false)),
       UsersService.list()
-        .then((users) =>
-          setAllUsers(users.map((u) => ({ id: u.id, name: u.name }))),
+        .then((res) =>
+          setAllUsers(res.data.map((u) => ({ id: u.id, name: u.name }))),
         )
         .catch(() => {})
         .finally(() => setLoadingAll(false)),

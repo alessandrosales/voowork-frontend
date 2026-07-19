@@ -241,20 +241,139 @@ export interface Task {
 /* ---------- Pagination ---------- */
 export interface PaginationMeta {
   page: number
-  per_page: number
-  total_count: number
-  total_pages: number
+  limit: number
+  pages: number
+  count: number
+  prev: number | null
+  next: number | null
 }
 
 export interface PaginatedResponse<T> {
   data: T[]
-  meta: PaginationMeta
+  pagination: PaginationMeta
+}
+
+export interface PaginationParams {
+  page?: number
+  limit?: number
 }
 
 /* ---------- Project reference (embedded in User/Customer) ---------- */
 export interface ProjectRef {
   id: string
   name: string
+}
+
+/* ---------- Screenshot ---------- */
+export interface ScreenshotPeripheralEvents {
+  [eventType: string]: number
+}
+
+export interface Screenshot {
+  id: string
+  tracking_id: string
+  path: string
+  original_id: string
+  captured_at: string
+  signed_url: string
+  user_id: string | null
+  user_name: string | null
+  user_initials: string | null
+  project_id: string | null
+  project_name: string | null
+  task_id: string | null
+  task_name: string | null
+  peripheral_events: ScreenshotPeripheralEvents
+  created_at: string
+  updated_at: string
+}
+
+export interface ScreenshotFilters {
+  user_id?: string
+  project_id?: string
+  captured_after?: string
+  captured_before?: string
+}
+
+/* ---------- Reports ---------- */
+
+/* ---- Project Time ---- */
+export interface ProjectTimeEntry {
+  project_id: string
+  project_name: string
+  total_seconds: number
+  trackings_count: number
+  tasks_count: number
+}
+
+export interface ProjectTimeResponse {
+  data: ProjectTimeEntry[]
+}
+
+/* ---- Timeline ---- */
+export interface TimelineBlock {
+  id: string
+  started_at: string
+  ended_at: string | null
+  duration_seconds: number
+  project_id: string
+  project_name: string | null
+  task_id: string | null
+  task_name: string | null
+}
+
+export interface TimelineDay {
+  date: string
+  blocks: TimelineBlock[]
+  total_seconds: number
+  blocks_count: number
+}
+
+export interface TimelineResponse {
+  data: TimelineDay[]
+}
+
+/* ---- Task Time ---- */
+export interface TaskTimeTask {
+  task_id: string
+  task_name: string
+  total_seconds: number
+  trackings_count: number
+}
+
+export interface TaskTimeProject {
+  project_id: string
+  project_name: string
+  total_seconds: number
+  tasks_count: number
+  tasks: TaskTimeTask[]
+}
+
+export interface TaskTimeResponse {
+  data: TaskTimeProject[]
+}
+
+/* ---- User Time ---- */
+export interface UserTimeEntry {
+  project_id: string
+  project_name: string
+  task_id: string
+  task_name: string
+  total_seconds: number
+  trackings_count: number
+}
+
+export interface UserTimeUser {
+  user_id: string
+  user_name: string
+  user_initials: string
+  total_seconds: number
+  entries_count: number
+  entries: UserTimeEntry[]
+}
+
+export interface UserTimeResponse {
+  data: UserTimeUser[]
 }
 
 /* ---------- Common ---------- */

@@ -4,7 +4,13 @@
 /* ------------------------------------------------------------------ */
 
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { Project, ProjectMember, ProjectCustomer, Customer } from "./types"
+import type {
+  Project,
+  ProjectMember,
+  ProjectCustomer,
+  Customer,
+  PaginatedResponse,
+} from "./types"
 
 const PROJECTS_PATH = "/api/v1/projects"
 
@@ -34,9 +40,13 @@ export const ProjectsService = {
 
   // --- Members (usuários já cadastrados) ---
 
-  async listMembers(projectId: string): Promise<ProjectMember[]> {
-    return apiGet<ProjectMember[]>(
+  async listMembers(
+    projectId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<ProjectMember>> {
+    return apiGet<PaginatedResponse<ProjectMember>>(
       `${PROJECTS_PATH}/${projectId}/members`,
+      params,
     )
   },
 
@@ -69,9 +79,13 @@ export const ProjectsService = {
 
   // --- Project Customers ---
 
-  async listProjectCustomers(projectId: string): Promise<ProjectCustomer[]> {
-    return apiGet<ProjectCustomer[]>(
+  async listProjectCustomers(
+    projectId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<ProjectCustomer>> {
+    return apiGet<PaginatedResponse<ProjectCustomer>>(
       `${PROJECTS_PATH}/${projectId}/customers`,
+      params,
     )
   },
 

@@ -57,8 +57,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               icon: <ImageIcon />,
             },
             {
-              title: t("nav.activity-reports"),
-              url: "/activities",
+              title: t("nav.project-time"),
+              url: "/reports/project-time",
+              icon: <FileTextIcon />,
+            },
+            {
+              title: t("nav.timeline"),
+              url: "/reports/timeline",
+              icon: <FileTextIcon />,
+            },
+            {
+              title: t("nav.task-time"),
+              url: "/reports/task-time",
+              icon: <FileTextIcon />,
+            },
+            {
+              title: t("nav.user-time"),
+              url: "/reports/user-time",
               icon: <FileTextIcon />,
             },
           ],

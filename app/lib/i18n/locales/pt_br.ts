@@ -7,7 +7,10 @@ const ptBr = {
     projects: "Projetos",
     agents: "Agentes",
     reports: "Relatórios",
-    "activity-reports": "Relatórios de atividades",
+    "project-time": "Tempo por Projeto",
+    timeline: "Linha do Tempo",
+    "task-time": "Tempo por Tarefa",
+    "user-time": "Tempo por Usuário",
   },
 } as const
 

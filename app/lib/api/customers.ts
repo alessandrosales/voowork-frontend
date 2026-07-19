@@ -1,11 +1,13 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
-import type { Customer, CustomerUserRef } from "./types"
+import type { Customer, CustomerUserRef, PaginatedResponse } from "./types"
 
 const CUSTOMERS_PATH = "/api/v1/customers"
 
 export const CustomersService = {
-  async list(params?: { name?: string; status?: string }): Promise<Customer[]> {
-    return apiGet<Customer[]>(CUSTOMERS_PATH, params as Record<string, string>)
+  async list(
+    params?: { name?: string; status?: string; page?: number; limit?: number },
+  ): Promise<PaginatedResponse<Customer>> {
+    return apiGet<PaginatedResponse<Customer>>(CUSTOMERS_PATH, params)
   },
 
   async get(id: string): Promise<Customer> {
@@ -43,8 +45,14 @@ export const CustomersService = {
 
   // --- Customer Users ---
 
-  async listUsers(customerId: string): Promise<CustomerUserRef[]> {
-    return apiGet<CustomerUserRef[]>(`${CUSTOMERS_PATH}/${customerId}/users`)
+  async listUsers(
+    customerId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<CustomerUserRef>> {
+    return apiGet<PaginatedResponse<CustomerUserRef>>(
+      `${CUSTOMERS_PATH}/${customerId}/users`,
+      params,
+    )
   },
 
   async addUser(customerId: string, userId: string): Promise<CustomerUserRef> {
@@ -59,8 +67,14 @@ export const CustomersService = {
 
   // --- Customer Projects ---
 
-  async listProjects(customerId: string): Promise<ProjectRef[]> {
-    return apiGet<ProjectRef[]>(`${CUSTOMERS_PATH}/${customerId}/projects`)
+  async listProjects(
+    customerId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<ProjectRef>> {
+    return apiGet<PaginatedResponse<ProjectRef>>(
+      `${CUSTOMERS_PATH}/${customerId}/projects`,
+      params,
+    )
   },
 
   async addProject(customerId: string, projectId: string): Promise<ProjectRef> {
