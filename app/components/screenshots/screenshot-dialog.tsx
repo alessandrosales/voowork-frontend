@@ -134,7 +134,7 @@ export function ScreenshotDialog({
 }: ScreenshotDialogProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isMagnifying, setIsMagnifying] = useState(false)
+  const [isMagnifying, setIsMagnifying] = useState(true)
   const [magPos, setMagPos] = useState({ x: 0, y: 0, rx: 0, ry: 0 })
   const [isHovering, setIsHovering] = useState(false)
   const imageContainerRef = useRef<HTMLDivElement | null>(null)
@@ -175,9 +175,9 @@ export function ScreenshotDialog({
     }
   }, [currentIndex, screenshots.length, goTo])
 
-  // Reset magnifier on screenshot change
+  // Keep magnifier active on screenshot change
   useEffect(() => {
-    setIsMagnifying(false)
+    setIsMagnifying(true)
   }, [currentIndex])
 
   /* ---- Loop / slideshow ---- */
@@ -218,12 +218,11 @@ export function ScreenshotDialog({
     goPrev()
   }, [stopLoop, goPrev])
 
-  /* ---- Reset fullscreen + playing + magnifier on dialog close ---- */
+  /* ---- Reset fullscreen + playing on dialog close ---- */
   useEffect(() => {
     if (!open) {
       setIsFullscreen(false)
       setIsPlaying(false)
-      setIsMagnifying(false)
     }
   }, [open])
 
