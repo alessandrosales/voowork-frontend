@@ -82,7 +82,7 @@ function ProjectGroup({ project }: { project: TaskTimeProject }) {
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="rounded-b-lg border border-t-0">
-        <div className="py-2">
+        <div className="py-2 pl-8">
           <TaskRows tasks={project.tasks} />
         </div>
       </CollapsibleContent>
