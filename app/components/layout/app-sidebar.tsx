@@ -57,13 +57,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               icon: <ImageIcon />,
             },
             {
-              title: t("nav.project-time"),
-              url: "/reports/project-time",
+              title: t("nav.timeline"),
+              url: "/reports/timeline",
               icon: <FileTextIcon />,
             },
             {
-              title: t("nav.timeline"),
-              url: "/reports/timeline",
+              title: t("nav.project-time"),
+              url: "/reports/project-time",
               icon: <FileTextIcon />,
             },
             {

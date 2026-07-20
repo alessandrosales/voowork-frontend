@@ -2,78 +2,16 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 
-import { ActivityTimeline } from "~/components/dashboard/activity-timeline"
+import { ActivityTimeline, convertToComponentDays } from "~/components/dashboard/activity-timeline"
 import { DashboardFilters } from "~/components/dashboard/dashboard-filters"
 import { ReportsService, ApiError } from "~/lib/api"
-import type { TimelineDay as ApiTimelineDay, ScreenshotFilters } from "~/lib/api/types"
+import type {
+  TimelineDay as ApiTimelineDay,
+  ScreenshotFilters,
+} from "~/lib/api/types"
 import type {
   TimelineDay as ComponentTimelineDay,
-  ActivitySegment,
 } from "~/components/dashboard/activity-timeline"
-
-/* ---------- Helpers ---------- */
-
-function formatDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-
-  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`
-  if (hours > 0) return `${hours}h`
-  if (minutes > 0) return `${minutes}m`
-  return "< 1m"
-}
-
-function formatDateLabel(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00")
-  const dayName = date.toLocaleDateString("pt-BR", { weekday: "short" })
-  const day = date.toLocaleDateString("pt-BR", {
-    day: "numeric",
-    month: "short",
-  })
-  return `${dayName}, ${day}`
-}
-
-function isWeekend(dateStr: string): boolean {
-  const date = new Date(dateStr + "T00:00:00")
-  const day = date.getDay()
-  return day === 0 || day === 6
-}
-
-function toDecimalHour(isoString: string): number {
-  const date = new Date(isoString)
-  if (isNaN(date.getTime())) return 0
-  return date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600
-}
-
-/* ---------- Data conversion ---------- */
-
-function convertToComponentDays(apiDays: ApiTimelineDay[]): ComponentTimelineDay[] {
-  return apiDays.map((day) => {
-    const segments = day.blocks
-      .filter((b) => Boolean(b.started_at))
-      .map((b): ActivitySegment => {
-        const startHour = toDecimalHour(b.started_at)
-        // ended_at pode ser null para trackings ativos — usa now() como fim
-        const endIso = b.ended_at ?? new Date().toISOString()
-        const endHour = toDecimalHour(endIso)
-        // Garante largura mínima de 1 segundo para blocos muito curtos
-        const safeEndHour = endHour > startHour ? endHour : startHour + 1 / 3600
-        return {
-          type: "computer",
-          startHour,
-          endHour: Math.min(safeEndHour, 24),
-        }
-      })
-
-    return {
-      date: day.date,
-      dayLabel: formatDateLabel(day.date),
-      timeWorked: formatDuration(day.total_seconds),
-      isWeekend: isWeekend(day.date),
-      segments,
-    }
-  })
-}
 
 /* ---------- Page ---------- */
 

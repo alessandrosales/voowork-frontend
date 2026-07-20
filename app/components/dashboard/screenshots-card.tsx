@@ -1,108 +1,123 @@
+"use client"
+
+import { useState } from "react"
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import type { Screenshot } from "~/lib/api/types"
+import { ScreenshotDialog } from "~/components/screenshots/screenshot-dialog"
 
-export interface ScreenshotEntry {
-  user: string
-  initials: string
-  time: string
-  thumbnailBg: string
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                           */
+/* ------------------------------------------------------------------ */
+
+function getInitial(name: string | null): string {
+  if (!name) return "?"
+  return name.charAt(0).toUpperCase()
 }
+
+function formatTimestamp(iso: string): string {
+  const date = new Date(iso)
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
+}
+
+/* ------------------------------------------------------------------ */
+/*  Props                                                             */
+/* ------------------------------------------------------------------ */
 
 interface ScreenshotsCardProps {
-  screenshots?: ScreenshotEntry[]
+  screenshots: Screenshot[]
+  isLoading: boolean
+  error: string | null
 }
 
-const DEFAULT_SCREENSHOTS: ScreenshotEntry[] = [
-  {
-    user: "Ana Silva",
-    initials: "AS",
-    time: "10:32",
-    thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-  },
-  {
-    user: "Carlos Oliveira",
-    initials: "CO",
-    time: "10:28",
-    thumbnailBg: "from-blue-500/20 to-blue-600/10",
-  },
-  {
-    user: "Marina Costa",
-    initials: "MC",
-    time: "10:25",
-    thumbnailBg: "from-violet-500/20 to-violet-600/10",
-  },
-  {
-    user: "Rafael Santos",
-    initials: "RS",
-    time: "10:22",
-    thumbnailBg: "from-amber-500/20 to-amber-600/10",
-  },
-  {
-    user: "Juliana Lima",
-    initials: "JL",
-    time: "10:18",
-    thumbnailBg: "from-rose-500/20 to-rose-600/10",
-  },
-  {
-    user: "Ana Silva",
-    initials: "AS",
-    time: "10:05",
-    thumbnailBg: "from-emerald-500/20 to-emerald-600/10",
-  },
-  {
-    user: "Carlos Oliveira",
-    initials: "CO",
-    time: "09:52",
-    thumbnailBg: "from-blue-500/20 to-blue-600/10",
-  },
-  {
-    user: "Marina Costa",
-    initials: "MC",
-    time: "09:45",
-    thumbnailBg: "from-violet-500/20 to-violet-600/10",
-  },
-]
+/* ------------------------------------------------------------------ */
+/*  Component                                                         */
+/* ------------------------------------------------------------------ */
 
 export function ScreenshotsCard({
-  screenshots = DEFAULT_SCREENSHOTS,
+  screenshots,
+  isLoading,
+  error,
 }: ScreenshotsCardProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogIndex, setDialogIndex] = useState<number | null>(null)
+
+  function handleCardClick(index: number) {
+    setDialogIndex(index)
+    setDialogOpen(true)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Screenshots</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {screenshots.map((screenshot, i) => (
-            <div
-              key={i}
-              className="flex w-44 shrink-0 flex-col gap-2 rounded-lg border bg-gradient-to-b p-2"
-            >
-              {/* Thumbnail placeholder */}
-              <div
-                className={`flex aspect-video items-center justify-center rounded-md bg-gradient-to-br ${screenshot.thumbnailBg}`}
-              >
-                <div className="flex size-10 items-center justify-center rounded-full bg-background/80 text-sm font-medium text-foreground">
-                  {screenshot.initials}
-                </div>
-              </div>
-              {/* Info */}
-              <div className="flex items-center justify-between text-xs">
-                <span className="truncate font-medium">
-                  {screenshot.user}
-                </span>
-                <span className="shrink-0 text-muted-foreground">
-                  {screenshot.time}
-                </span>
-              </div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Screenshots</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Carregando...
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          ) : screenshots.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Nenhum screenshot encontrado.
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {screenshots.map((screenshot, i) => (
+                <button
+                  key={screenshot.id}
+                  type="button"
+                  onClick={() => handleCardClick(i)}
+                  className="flex w-44 shrink-0 flex-col gap-2 rounded-lg border bg-gradient-to-b p-2 text-left transition-shadow hover:shadow-md"
+                >
+                  {/* Thumbnail */}
+                  <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-muted">
+                    {screenshot.signed_url ? (
+                      <img
+                        src={screenshot.signed_url}
+                        alt={`Screenshot - ${screenshot.user_name ?? "desconhecido"}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex size-10 items-center justify-center rounded-full bg-background/80 text-sm font-medium text-foreground shadow-xs">
+                        {getInitial(screenshot.user_name)}
+                      </div>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="truncate font-medium">
+                      {screenshot.user_name || "—"}
+                    </span>
+                    <span className="shrink-0 text-muted-foreground tabular-nums">
+                      {formatTimestamp(screenshot.captured_at)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ScreenshotDialog
+        screenshots={screenshots}
+        currentIndex={dialogIndex}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onIndexChange={setDialogIndex}
+      />
+    </>
   )
 }

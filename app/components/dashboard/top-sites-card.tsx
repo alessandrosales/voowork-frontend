@@ -37,7 +37,7 @@ export function TopSitesCard({ sites = DEFAULT_SITES }: TopSitesCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Principais Sites</CardTitle>
+        <CardTitle>Tempo por site</CardTitle>
       </CardHeader>
       <CardContent className="px-0 pt-0">
         <Table>

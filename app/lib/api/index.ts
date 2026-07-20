@@ -57,4 +57,6 @@ export type {
   UserTimeEntry,
   UserTimeUser,
   UserTimeResponse,
+  CountersData,
+  CountersResponse,
 } from "./types"

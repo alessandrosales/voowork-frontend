@@ -376,6 +376,63 @@ export interface UserTimeResponse {
   data: UserTimeUser[]
 }
 
+/* ---- Counters (dashboard) ---- */
+export interface CountersData {
+  users_count: number
+  projects_count: number
+  tasks_count: number
+  total_hours: number
+}
+
+export interface CountersResponse {
+  data: CountersData
+}
+
+/* ---- User Activity (dashboard) ---- */
+export interface UserActivityEntry {
+  name: string
+  time: string
+  hours: number
+}
+
+export interface UserActivityResponse {
+  data: UserActivityEntry[]
+}
+
+/* ---- Top Activities / Tasks (dashboard) ---- */
+export interface TopActivityEntry {
+  name: string
+  color: string
+  time: string
+  hours: number
+}
+
+export interface TopActivitiesResponse {
+  data: TopActivityEntry[]
+}
+
+/* ---- Top Apps (dashboard) ---- */
+export interface TopAppEntry {
+  name: string
+  time: string
+  hours: number
+}
+
+export interface TopAppsResponse {
+  data: TopAppEntry[]
+}
+
+/* ---- Top Sites (dashboard) ---- */
+export interface TopSiteEntry {
+  name: string
+  time: string
+  hours: number
+}
+
+export interface TopSitesResponse {
+  data: TopSiteEntry[]
+}
+
 /* ---------- Common ---------- */
 export interface ApiErrorBody {
   errors: Record<string, string[]>
