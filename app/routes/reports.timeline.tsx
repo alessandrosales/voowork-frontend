@@ -5,7 +5,11 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 import { ActivityTimeline } from "~/components/dashboard/activity-timeline"
 import { DashboardFilters } from "~/components/dashboard/dashboard-filters"
 import { ReportsService, ApiError } from "~/lib/api"
-import type { TimelineDay as ApiTimelineDay, ScreenshotFilters } from "~/lib/api/types"
+import type {
+  TimelineBlock,
+  TimelineDay as ApiTimelineDay,
+  ScreenshotFilters,
+} from "~/lib/api/types"
 import type {
   TimelineDay as ComponentTimelineDay,
   ActivitySegment,
@@ -45,34 +49,66 @@ function toDecimalHour(isoString: string): number {
   return date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600
 }
 
+/** Extrai data local (YYYY-MM-DD) de um timestamp ISO */
+function localDateOf(isoString: string): string {
+  const d = new Date(isoString)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 /* ---------- Data conversion ---------- */
 
 function convertToComponentDays(apiDays: ApiTimelineDay[]): ComponentTimelineDay[] {
-  return apiDays.map((day) => {
-    const segments = day.blocks
-      .filter((b) => Boolean(b.started_at))
-      .map((b): ActivitySegment => {
-        const startHour = toDecimalHour(b.started_at)
-        // ended_at pode ser null para trackings ativos — usa now() como fim
-        const endIso = b.ended_at ?? new Date().toISOString()
-        const endHour = toDecimalHour(endIso)
-        // Garante largura mínima de 1 segundo para blocos muito curtos
-        const safeEndHour = endHour > startHour ? endHour : startHour + 1 / 3600
-        return {
-          type: "computer",
-          startHour,
-          endHour: Math.min(safeEndHour, 24),
-        }
-      })
+  // 1. Flatten todos os blocos e re-agrupa por data LOCAL
+  const byLocalDate = new Map<
+    string,
+    { blocks: TimelineBlock[]; totalSeconds: number }
+  >()
 
-    return {
-      date: day.date,
-      dayLabel: formatDateLabel(day.date),
-      timeWorked: formatDuration(day.total_seconds),
-      isWeekend: isWeekend(day.date),
-      segments,
+  for (const day of apiDays) {
+    for (const block of day.blocks) {
+      if (!block.started_at) continue
+      const localDate = localDateOf(block.started_at)
+      if (!byLocalDate.has(localDate)) {
+        byLocalDate.set(localDate, { blocks: [], totalSeconds: 0 })
+      }
+      const entry = byLocalDate.get(localDate)!
+      entry.blocks.push(block)
+      entry.totalSeconds += block.duration_seconds
     }
-  })
+  }
+
+  // 2. Converte para o formato do componente
+  const days: ComponentTimelineDay[] = []
+  for (const [date, { blocks, totalSeconds }] of byLocalDate) {
+    const segments = blocks.map((b): ActivitySegment => {
+      const startHour = toDecimalHour(b.started_at)
+      const endIso = b.ended_at ?? new Date().toISOString()
+      const endHour = toDecimalHour(endIso)
+      // Se endHour < startHour, o bloco cruza meia-noite — cap em 24
+      const safeEndHour = endHour > startHour ? endHour : 24
+      return {
+        type: "computer",
+        startHour,
+        endHour: Math.min(safeEndHour, 24),
+      }
+    })
+
+    days.push({
+      date,
+      dayLabel: formatDateLabel(date),
+      timeWorked: formatDuration(totalSeconds),
+      isWeekend: isWeekend(date),
+      segments,
+    })
+  }
+
+  // 3. Ordena do mais recente para o mais antigo
+  days.sort((a, b) => b.date.localeCompare(a.date))
+
+  return days
 }
 
 /* ---------- Page ---------- */
