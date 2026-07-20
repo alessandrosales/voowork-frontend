@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import {
   Table,
   TableBody,
@@ -15,7 +10,6 @@ import {
 
 export interface UserEntry {
   name: string
-  initials: string
   time: string
   hours: number
 }
@@ -25,11 +19,11 @@ interface UserActivityCardProps {
 }
 
 const DEFAULT_USERS: UserEntry[] = [
-  { name: "Ana Silva", initials: "AS", time: "42h 30m", hours: 42.5 },
-  { name: "Carlos Oliveira", initials: "CO", time: "38h 15m", hours: 38.25 },
-  { name: "Marina Costa", initials: "MC", time: "35h 45m", hours: 35.75 },
-  { name: "Rafael Santos", initials: "RS", time: "28h 20m", hours: 28.33 },
-  { name: "Juliana Lima", initials: "JL", time: "22h 10m", hours: 22.17 },
+  { name: "Ana Silva", time: "42h 30m", hours: 42.5 },
+  { name: "Carlos Oliveira", time: "38h 15m", hours: 38.25 },
+  { name: "Marina Costa", time: "35h 45m", hours: 35.75 },
+  { name: "Rafael Santos", time: "28h 20m", hours: 28.33 },
+  { name: "Juliana Lima", time: "22h 10m", hours: 22.17 },
 ]
 
 const MAX_HOURS = 42.5
@@ -40,7 +34,7 @@ export function UserActivityCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Usuários</CardTitle>
+        <CardTitle>Tempo por usuário</CardTitle>
       </CardHeader>
       <CardContent className="px-0 pt-0">
         <Table>
@@ -54,12 +48,7 @@ export function UserActivityCard({
             {users.map((user) => (
               <TableRow key={user.name} className="group">
                 <TableCell className="px-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                      {user.initials}
-                    </div>
-                    <span>{user.name}</span>
-                  </div>
+                  <span>{user.name}</span>
                 </TableCell>
                 <TableCell className="w-24 px-4 text-right tabular-nums">
                   <div className="flex items-center justify-end gap-2">

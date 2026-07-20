@@ -40,7 +40,7 @@ export function TopActivitiesCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Atividades</CardTitle>
+        <CardTitle>Tempo por task</CardTitle>
       </CardHeader>
       <CardContent className="px-0 pt-0">
         <Table>
@@ -54,10 +54,7 @@ export function TopActivitiesCard({
             {activities.map((activity) => (
               <TableRow key={activity.name} className="group">
                 <TableCell className="px-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`size-3 rounded-sm ${activity.color}`} />
-                    <span>{activity.name}</span>
-                  </div>
+                  <span>{activity.name}</span>
                 </TableCell>
                 <TableCell className="w-24 px-4 text-right tabular-nums">
                   <div className="flex items-center justify-end gap-2">

@@ -37,7 +37,7 @@ export function TopAppsCard({ apps = DEFAULT_APPS }: TopAppsCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Principais Apps</CardTitle>
+        <CardTitle>Tempo por aplicativo</CardTitle>
       </CardHeader>
       <CardContent className="px-0 pt-0">
         <Table>
