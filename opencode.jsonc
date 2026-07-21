@@ -3,6 +3,9 @@
 
   "instructions": ["AGENTS.md"],
 
-  "default_agent": "frontend-agent-orchestrator"
+  "default_agent": "frontend-agent-orchestrator",
 
+  "skills": {
+    "paths": [".agents/skills"]
+  }
 }

@@ -361,5 +361,11 @@ app/lib/api/
 - The default agent is `frontend-agent-orchestrator` (configured in `opencode.jsonc`)
 - This file is referenced as `instructions` in `opencode.jsonc`
 - Agent definitions are in `.opencode/agents/` (10 agents)
-- Skills in `.agents/skills/shadcn/`, `.agents/skills/tailwind-best-practices/`, `.agents/skills/tailwind-design-system/`
+- Skills baixadas via `skills.sh` vivem em `.agents/skills/` — lidas pelo OpenCode (via `skills.paths` no `opencode.jsonc`) e pelo Cursor (auto-descoberta). Use uma skill existente antes de improvisar um fluxo que ela já cobre:
+  - `shadcn` — adicionar/compor/depurar componentes shadcn/ui e registries
+  - `tailwind-best-practices` — diretrizes de estilo Tailwind e design tokens
+  - `tailwind-design-system` — construção de design system com Tailwind v4
+  - `react-router-framework-mode` — padrões oficiais do React Router 7 (framework mode)
+  - `vercel-react-best-practices` — performance React (waterfalls, bundle, re-render)
+  - `tanstack-table` — padrões oficiais do TanStack Table (usado em todas as tabelas)
 - Agent system prompts reference "voowork-frontend" (the template this was generated from)
