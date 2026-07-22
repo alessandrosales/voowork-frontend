@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     AuthService.me()
-      .then((u) => setUser(u))
+      .then(({ user }) => setUser(user))
       .catch(() => {
         // Token inválido/expirado → limpa
         setToken(null)
@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const u = await AuthService.me()
-      setUser(u)
+      const { user } = await AuthService.me()
+      setUser(user)
     } catch {
       // Token inválido/expirado — logout silencioso
       AuthService.logout()

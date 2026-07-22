@@ -9,6 +9,7 @@ import type {
   ChangePasswordResponse,
   LoginRequest,
   LoginResponse,
+  MeResponse,
   RecoverPasswordRequest,
   RegisterRequest,
   RegisterResponse,
@@ -42,13 +43,15 @@ export const AuthService = {
   /**
    * Recupera perfil do usuário autenticado (GET /auth/me).
    * Usado para validar token existente ao iniciar a app.
+   * Retorna { user, account } — extraia `.user` para o estado de sessão.
    */
-  async me(): Promise<User> {
-    return apiGet<User>(`${AUTH_PREFIX}/me`)
+  async me(): Promise<MeResponse> {
+    return apiGet<MeResponse>(`${AUTH_PREFIX}/me`)
   },
 
   /**
    * Atualiza perfil do usuário autenticado (PATCH /auth/me).
+   * Retorna { user, account } com os dados atualizados.
    */
   async updateProfile(
     data: Partial<{
@@ -59,8 +62,8 @@ export const AuthService = {
       password: string
       password_confirmation: string
     }>,
-  ): Promise<User> {
-    return apiPatch<User>(`${AUTH_PREFIX}/me`, { user: data })
+  ): Promise<MeResponse> {
+    return apiPatch<MeResponse>(`${AUTH_PREFIX}/me`, { user: data })
   },
 
   /**

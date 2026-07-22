@@ -36,6 +36,7 @@ export type {
   PaginationParams,
   LoginRequest,
   LoginResponse,
+  MeResponse,
   RegisterRequest,
   RegisterResponse,
   RecoverPasswordRequest,

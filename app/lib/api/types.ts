@@ -139,6 +139,11 @@ export interface ChangePasswordResponse {
   user: User
 }
 
+export interface MeResponse {
+  user: User
+  account: Account
+}
+
 /* ---------- Producer ---------- */
 export interface Producer {
   id: string
