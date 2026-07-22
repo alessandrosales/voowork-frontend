@@ -9,7 +9,89 @@ export interface Account {
   name: string
   email: string
   preferred_language: "en" | "pt_br" | "es"
+  is_admin: boolean
+  stripe_customer_id: string | null
+  active_subscription: Subscription | null
   created_at: string
+}
+
+/* ---------- Plan ---------- */
+export interface PlanFeature {
+  [key: string]: boolean | number | string | null
+}
+
+export interface Plan {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  features: PlanFeature
+  sort_order: number
+  active: boolean
+  trial_days: number
+  prices: PlanPrice[]
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Plan Price ---------- */
+export type PriceInterval = "month" | "year"
+
+export interface PlanPrice {
+  id: string
+  plan_id: string
+  stripe_price_id: string
+  currency: string
+  country_code: string | null
+  interval: PriceInterval
+  unit_amount_cents: number
+  amount: number
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Subscription ---------- */
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "incomplete"
+  | "incomplete_expired"
+  | "paused"
+
+export interface Subscription {
+  id: string
+  account_id: string
+  plan: {
+    id: string
+    name: string
+    slug: string
+  }
+  price: {
+    id: string
+    currency: string
+    interval: PriceInterval
+    amount: number
+  }
+  status: SubscriptionStatus
+  current_period_start: string | null
+  current_period_end: string | null
+  trial_ends_at: string | null
+  canceled_at: string | null
+  quantity: number
+  created_at: string
+  updated_at: string
+}
+
+/* ---------- Billing ---------- */
+export interface CreateCheckoutResponse {
+  checkout_url: string
+}
+
+export interface UpdateSubscriptionResponse {
+  subscription: Subscription
 }
 
 /* ---------- User ---------- */
@@ -96,6 +178,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   user: User
+  account: Account
 }
 
 export interface RegisterRequest {

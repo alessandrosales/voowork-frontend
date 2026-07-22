@@ -24,6 +24,8 @@ import {
   UsersIcon,
   ImageIcon,
   FileTextIcon,
+  CreditCardIcon,
+  LayersIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -101,6 +103,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: t("nav.agents"),
             url: "/agents",
             icon: <BotIcon />,
+          },
+          {
+            title: t("nav.subscription"),
+            url: "/subscription",
+            icon: <CreditCardIcon />,
+          },
+          {
+            title: t("nav.plans-manage"),
+            url: "/admin/plans",
+            icon: <LayersIcon />,
           },
         )
       }

@@ -11,6 +11,9 @@ export { TasksService } from "./tasks"
 export { CustomersService } from "./customers"
 export { ScreenshotsService } from "./screenshots"
 export { ReportsService } from "./reports"
+export { PlansService } from "./plans"
+export { PlanPricesService } from "./plan-prices"
+export { SubscriptionsService } from "./subscriptions"
 
 export type {
   Account,
@@ -60,4 +63,12 @@ export type {
   UserTimeResponse,
   CountersData,
   CountersResponse,
+  Plan,
+  PlanFeature,
+  PlanPrice,
+  PriceInterval,
+  Subscription,
+  SubscriptionStatus,
+  CreateCheckoutResponse,
+  UpdateSubscriptionResponse,
 } from "./types"
