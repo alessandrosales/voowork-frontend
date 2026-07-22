@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table"
-import type { TimelineBlock, TimelineDay as ApiTimelineDay } from "~/lib/api/types"
+import type { TimelineBlock, TimelineDay as ApiTimelineDay, Screenshot } from "~/lib/api/types"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -153,8 +153,23 @@ function deduplicatedBlockSeconds(blocks: TimelineBlock[]): number {
   return Math.floor(total / 1000)
 }
 
-export function convertToComponentDays(apiDays: ApiTimelineDay[]): TimelineDay[] {
-  // 1. Flatten all blocks and re-group by local date
+export function convertToComponentDays(
+  apiDays: ApiTimelineDay[],
+  screenshots?: Screenshot[],
+): TimelineDay[] {
+  // 1. Build a map of screenshots by tracking_id for quick lookup
+  const inactiveScreenshotsByTracking = new Map<string, Screenshot[]>()
+  if (screenshots) {
+    for (const ss of screenshots) {
+      if (ss.time_category === "inactivity" && ss.tracking_id) {
+        const group = inactiveScreenshotsByTracking.get(ss.tracking_id) ?? []
+        group.push(ss)
+        inactiveScreenshotsByTracking.set(ss.tracking_id, group)
+      }
+    }
+  }
+
+  // 2. Flatten all blocks and re-group by local date
   const byLocalDate = new Map<string, { blocks: TimelineBlock[] }>()
 
   for (const day of apiDays) {
@@ -169,22 +184,65 @@ export function convertToComponentDays(apiDays: ApiTimelineDay[]): TimelineDay[]
     }
   }
 
-  // 2. Convert to component format
+  // 3. Convert to component format
   const days: TimelineDay[] = []
   for (const [date, { blocks }] of byLocalDate) {
     const totalSeconds = deduplicatedBlockSeconds(blocks)
-    const segments = blocks.map((b): ActivitySegment => {
-      const startHour = toDecimalHour(b.started_at)
-      const endIso = b.ended_at ?? new Date().toISOString()
+    const segments: ActivitySegment[] = []
+
+    for (const block of blocks) {
+      const startHour = toDecimalHour(block.started_at)
+      const endIso = block.ended_at ?? new Date().toISOString()
       const endHour = toDecimalHour(endIso)
       // If endHour < startHour, the block crosses midnight — cap at 24
       const safeEndHour = endHour > startHour ? endHour : 24
-      return {
-        type: b.is_live || b.status === "active" ? "live" : "computer",
+
+      // Base segment (live | computer)
+      segments.push({
+        type: block.is_live || block.status === "active" ? "live" : "computer",
         startHour,
         endHour: Math.min(safeEndHour, 24),
+      })
+
+      // Inactivity segments from screenshots
+      const blockInactiveSs = inactiveScreenshotsByTracking.get(block.id)
+      if (blockInactiveSs && blockInactiveSs.length > 0) {
+        const blockStartMs = new Date(block.started_at).getTime()
+        const blockEndMs = new Date(block.ended_at ?? Date.now()).getTime()
+
+        for (const ss of blockInactiveSs) {
+          if (!ss.period_started_at) continue
+
+          const leaveStartMs = Math.max(
+            new Date(ss.period_started_at).getTime(),
+            blockStartMs,
+          )
+          const leaveEndMs = Math.min(
+            new Date(ss.captured_at).getTime(),
+            blockEndMs,
+          )
+
+          // Skip if the clipped interval is invalid
+          if (leaveEndMs <= leaveStartMs) continue
+
+          const leaveStartHour = new Date(leaveStartMs).getHours()
+            + new Date(leaveStartMs).getMinutes() / 60
+            + new Date(leaveStartMs).getSeconds() / 3600
+          const leaveEndHour = new Date(leaveEndMs).getHours()
+            + new Date(leaveEndMs).getMinutes() / 60
+            + new Date(leaveEndMs).getSeconds() / 3600
+
+          segments.push({
+            type: "leave",
+            startHour: Math.max(leaveStartHour, 0),
+            endHour: Math.min(leaveEndHour, 24),
+          })
+        }
       }
-    })
+    }
+
+    // Sort segments by startHour
+    segments.sort((a, b) => a.startHour - b.startHour)
 
     days.push({
       date,
@@ -195,7 +253,7 @@ export function convertToComponentDays(apiDays: ApiTimelineDay[]): TimelineDay[]
     })
   }
 
-  // 3. Sort most recent first
+  // 4. Sort most recent first
   days.sort((a, b) => b.date.localeCompare(a.date))
 
   return days

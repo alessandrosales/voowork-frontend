@@ -11,7 +11,6 @@ import {
 } from "~/components/ui/card"
 
 import type { Screenshot } from "~/lib/api/types"
-import { ActivityLevelBadge } from "./activity-level-badge"
 import { ScreenshotDialog } from "./screenshot-dialog"
 
 /* ------------------------------------------------------------------ */
@@ -205,9 +204,6 @@ export function ScreenshotsGrid({
                               <CopyIcon className="size-2.5" />
                               Repetitiva
                             </Badge>
-                          )}
-                          {screenshot.activity_level && (
-                            <ActivityLevelBadge level={screenshot.activity_level} />
                           )}
                         </div>
                         <div className="flex items-center justify-between">

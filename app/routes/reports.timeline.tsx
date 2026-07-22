@@ -4,24 +4,26 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 
 import { ActivityTimeline, convertToComponentDays } from "~/components/dashboard/activity-timeline"
 import { DashboardFilters } from "~/components/dashboard/dashboard-filters"
-import { ReportsService, ApiError } from "~/lib/api"
+import { ReportsService, ScreenshotsService, ApiError } from "~/lib/api"
 import type {
+  Screenshot,
   TimelineDay as ApiTimelineDay,
   ScreenshotFilters,
 } from "~/lib/api/types"
-import type {
-  TimelineDay as ComponentTimelineDay,
-} from "~/components/dashboard/activity-timeline"
 
 /* ---------- Page ---------- */
 
 export default function TimelineReportPage() {
   const [data, setData] = useState<ApiTimelineDay[]>([])
+  const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<ScreenshotFilters>({})
 
-  const componentDays = useMemo(() => convertToComponentDays(data), [data])
+  const componentDays = useMemo(
+    () => convertToComponentDays(data, screenshots),
+    [data, screenshots],
+  )
 
   const handleApplyFilters = useCallback((newFilters: ScreenshotFilters) => {
     setFilters(newFilters)
@@ -33,10 +35,14 @@ export default function TimelineReportPage() {
     setIsLoading(true)
     setError(null)
 
-    ReportsService.timeline(filters)
-      .then((res) => {
+    Promise.all([
+      ReportsService.timeline(filters),
+      ScreenshotsService.list({ ...filters, limit: 20 }),
+    ])
+      .then(([timeline, ss]) => {
         if (!cancelled) {
-          setData(res.data)
+          setData(timeline.data)
+          setScreenshots(ss.data)
           setIsLoading(false)
         }
       })

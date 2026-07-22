@@ -291,6 +291,8 @@ export interface Screenshot {
   peripheral_events: ScreenshotPeripheralEvents
   is_duplicate?: boolean
   activity_level?: "low" | "medium" | "high"
+  time_category?: "active" | "inactivity"
+  period_started_at?: string | null
   created_at: string
   updated_at: string
 }

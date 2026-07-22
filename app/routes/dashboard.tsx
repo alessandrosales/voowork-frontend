@@ -72,7 +72,7 @@ export default function Page() {
         setTopSites(sites.data)
         setCounters(cnt.data)
         setScreenshots(ss.data)
-        setTimelineDays(convertToComponentDays(tl.data))
+        setTimelineDays(convertToComponentDays(tl.data, ss.data))
       })
       .catch((err) => {
         if (cancelled) return

@@ -11,8 +11,6 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog"
 import type { Screenshot } from "~/lib/api/types"
-import { ActivityLevelBadge } from "./activity-level-badge"
-
 /* ------------------------------------------------------------------ */
 /*  Labels para eventos de periférico                                 */
 /* ------------------------------------------------------------------ */
@@ -479,8 +477,8 @@ export function ScreenshotDialog({
               <InfoRow label="Tarefa" value={screenshot.task_name} />
             </div>
 
-            {/* Duplicate & Activity Level */}
-            {(screenshot.is_duplicate || screenshot.activity_level) && (
+            {/* Duplicate badge */}
+            {screenshot.is_duplicate && (
               <div className="rounded-lg border p-3">
                 <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Classificação
@@ -491,9 +489,6 @@ export function ScreenshotDialog({
                       <CopyIcon className="size-3" />
                       Repetitiva
                     </Badge>
-                  )}
-                  {screenshot.activity_level && (
-                    <ActivityLevelBadge level={screenshot.activity_level} />
                   )}
                 </div>
               </div>
