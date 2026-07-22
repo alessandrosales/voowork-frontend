@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { CopyIcon } from "lucide-react"
 
+import { Badge } from "~/components/ui/badge"
 import {
   Card,
   CardHeader,
@@ -203,6 +205,38 @@ export function ScreenshotsGrid({
                           <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
                             {formatTimestamp(screenshot.captured_at)}
                           </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {screenshot.is_duplicate && (
+                            <Badge variant="secondary" className="gap-0.5 text-[10px]">
+                              <CopyIcon className="size-2.5" />
+                              Repetitiva
+                            </Badge>
+                          )}
+                          {screenshot.activity_level === "low" && (
+                            <Badge
+                              variant="outline"
+                              className="border-yellow-200 bg-yellow-100 text-yellow-800"
+                            >
+                              Baixa
+                            </Badge>
+                          )}
+                          {screenshot.activity_level === "medium" && (
+                            <Badge
+                              variant="outline"
+                              className="border-green-200 bg-green-100 text-green-800"
+                            >
+                              Média
+                            </Badge>
+                          )}
+                          {screenshot.activity_level === "high" && (
+                            <Badge
+                              variant="outline"
+                              className="border-blue-200 bg-blue-100 text-blue-800"
+                            >
+                              Alta
+                            </Badge>
+                          )}
                         </div>
                       </CardHeader>
                     </Card>

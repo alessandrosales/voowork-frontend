@@ -289,6 +289,8 @@ export interface Screenshot {
   task_id: string | null
   task_name: string | null
   peripheral_events: ScreenshotPeripheralEvents
+  is_duplicate?: boolean
+  activity_level?: "low" | "medium" | "high"
   created_at: string
   updated_at: string
 }

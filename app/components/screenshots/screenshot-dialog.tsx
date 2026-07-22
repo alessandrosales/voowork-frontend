@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useCallback, useState, useRef } from "react"
-import { ChevronLeftIcon, ChevronRightIcon, MaximizeIcon, MinimizeIcon, MonitorIcon, PlayIcon, PauseIcon, SearchIcon, XIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, CopyIcon, MaximizeIcon, MinimizeIcon, MonitorIcon, PlayIcon, PauseIcon, SearchIcon, XIcon } from "lucide-react"
 
+import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import {
   Dialog,
@@ -476,6 +477,47 @@ export function ScreenshotDialog({
               <InfoRow label="Projeto" value={screenshot.project_name} />
               <InfoRow label="Tarefa" value={screenshot.task_name} />
             </div>
+
+            {/* Duplicate & Activity Level */}
+            {(screenshot.is_duplicate || screenshot.activity_level) && (
+              <div className="rounded-lg border p-3">
+                <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Classificação
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {screenshot.is_duplicate && (
+                    <Badge variant="secondary" className="gap-1">
+                      <CopyIcon className="size-3" />
+                      Repetitiva
+                    </Badge>
+                  )}
+                  {screenshot.activity_level === "low" && (
+                    <Badge
+                      variant="outline"
+                      className="border-yellow-200 bg-yellow-100 text-yellow-800"
+                    >
+                      Baixa atividade
+                    </Badge>
+                  )}
+                  {screenshot.activity_level === "medium" && (
+                    <Badge
+                      variant="outline"
+                      className="border-green-200 bg-green-100 text-green-800"
+                    >
+                      Média atividade
+                    </Badge>
+                  )}
+                  {screenshot.activity_level === "high" && (
+                    <Badge
+                      variant="outline"
+                      className="border-blue-200 bg-blue-100 text-blue-800"
+                    >
+                      Alta atividade
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Peripheral events */}
             <div className="rounded-lg border p-3">
