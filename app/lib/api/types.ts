@@ -321,6 +321,9 @@ export interface TimelineBlock {
   started_at: string
   ended_at: string | null
   duration_seconds: number
+  status?: "active" | "inactive"
+  is_live?: boolean
+  user_id?: string | null
   project_id: string
   project_name: string | null
   task_id: string | null

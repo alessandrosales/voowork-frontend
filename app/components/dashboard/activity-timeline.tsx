@@ -56,6 +56,7 @@ const HOUR_MARKERS = Array.from({ length: 24 }, (_, i) => ({
 
 const DEFAULT_ACTIVITIES: Record<string, ActivityConfig> = {
   computer: { label: "Tempo no Computador", color: "bg-emerald-500" },
+  live: { label: "Em andamento", color: "bg-emerald-400 ring-1 ring-emerald-600/40" },
   manual: { label: "Tempo Manual", color: "bg-amber-400" },
   mobile: { label: "Tempo Mobile", color: "bg-blue-500" },
   break: { label: "Tempo de Pausa", color: "bg-gray-400" },
@@ -106,29 +107,72 @@ function localDateOf(isoString: string): string {
   return `${year}-${month}-${day}`
 }
 
+function deduplicatedBlockSeconds(blocks: TimelineBlock[]): number {
+  const byUser = new Map<string, TimelineBlock[]>()
+
+  for (const block of blocks) {
+    const userId = block.user_id ?? "unknown"
+    const group = byUser.get(userId) ?? []
+    group.push(block)
+    byUser.set(userId, group)
+  }
+
+  let total = 0
+  for (const userBlocks of byUser.values()) {
+    const intervals = userBlocks
+      .map((block) => ({
+        start: new Date(block.started_at).getTime(),
+        end: new Date(block.ended_at ?? Date.now()).getTime(),
+      }))
+      .filter((interval) => interval.end > interval.start)
+      .sort((a, b) => a.start - b.start)
+
+    let mergedEnd = 0
+    let mergedStart = 0
+    let userTotal = 0
+
+    for (const interval of intervals) {
+      if (mergedEnd === 0 || interval.start > mergedEnd) {
+        if (mergedEnd > mergedStart) {
+          userTotal += mergedEnd - mergedStart
+        }
+        mergedStart = interval.start
+        mergedEnd = interval.end
+      } else {
+        mergedEnd = Math.max(mergedEnd, interval.end)
+      }
+    }
+
+    if (mergedEnd > mergedStart) {
+      userTotal += mergedEnd - mergedStart
+    }
+
+    total += userTotal
+  }
+
+  return Math.floor(total / 1000)
+}
+
 export function convertToComponentDays(apiDays: ApiTimelineDay[]): TimelineDay[] {
   // 1. Flatten all blocks and re-group by local date
-  const byLocalDate = new Map<
-    string,
-    { blocks: TimelineBlock[]; totalSeconds: number }
-  >()
+  const byLocalDate = new Map<string, { blocks: TimelineBlock[] }>()
 
   for (const day of apiDays) {
     for (const block of day.blocks) {
       if (!block.started_at) continue
       const localDate = localDateOf(block.started_at)
       if (!byLocalDate.has(localDate)) {
-        byLocalDate.set(localDate, { blocks: [], totalSeconds: 0 })
+        byLocalDate.set(localDate, { blocks: [] })
       }
       const entry = byLocalDate.get(localDate)!
       entry.blocks.push(block)
-      entry.totalSeconds += block.duration_seconds
     }
   }
 
   // 2. Convert to component format
   const days: TimelineDay[] = []
-  for (const [date, { blocks, totalSeconds }] of byLocalDate) {
+  for (const [date, { blocks }] of byLocalDate) {
+    const totalSeconds = deduplicatedBlockSeconds(blocks)
     const segments = blocks.map((b): ActivitySegment => {
       const startHour = toDecimalHour(b.started_at)
       const endIso = b.ended_at ?? new Date().toISOString()
@@ -136,7 +180,7 @@ export function convertToComponentDays(apiDays: ApiTimelineDay[]): TimelineDay[]
       // If endHour < startHour, the block crosses midnight — cap at 24
       const safeEndHour = endHour > startHour ? endHour : 24
       return {
-        type: "computer",
+        type: b.is_live || b.status === "active" ? "live" : "computer",
         startHour,
         endHour: Math.min(safeEndHour, 24),
       }
