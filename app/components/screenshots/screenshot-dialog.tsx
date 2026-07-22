@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog"
 import type { Screenshot } from "~/lib/api/types"
+import { ActivityLevelBadge } from "./activity-level-badge"
 
 /* ------------------------------------------------------------------ */
 /*  Labels para eventos de periférico                                 */
@@ -491,29 +492,8 @@ export function ScreenshotDialog({
                       Repetitiva
                     </Badge>
                   )}
-                  {screenshot.activity_level === "low" && (
-                    <Badge
-                      variant="outline"
-                      className="border-yellow-200 bg-yellow-100 text-yellow-800"
-                    >
-                      Baixa atividade
-                    </Badge>
-                  )}
-                  {screenshot.activity_level === "medium" && (
-                    <Badge
-                      variant="outline"
-                      className="border-green-200 bg-green-100 text-green-800"
-                    >
-                      Média atividade
-                    </Badge>
-                  )}
-                  {screenshot.activity_level === "high" && (
-                    <Badge
-                      variant="outline"
-                      className="border-blue-200 bg-blue-100 text-blue-800"
-                    >
-                      Alta atividade
-                    </Badge>
+                  {screenshot.activity_level && (
+                    <ActivityLevelBadge level={screenshot.activity_level} />
                   )}
                 </div>
               </div>

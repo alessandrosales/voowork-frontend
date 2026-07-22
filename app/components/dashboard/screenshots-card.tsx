@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import type { Screenshot } from "~/lib/api/types"
+import { ActivityLevelBadge } from "~/components/screenshots/activity-level-badge"
 import { ScreenshotDialog } from "~/components/screenshots/screenshot-dialog"
 
 /* ------------------------------------------------------------------ */
@@ -105,29 +106,8 @@ export function ScreenshotsCard({
                         Repetitiva
                       </Badge>
                     )}
-                    {screenshot.activity_level === "low" && (
-                      <Badge
-                        variant="outline"
-                        className="border-yellow-200 bg-yellow-100 text-yellow-800"
-                      >
-                        Baixa
-                      </Badge>
-                    )}
-                    {screenshot.activity_level === "medium" && (
-                      <Badge
-                        variant="outline"
-                        className="border-green-200 bg-green-100 text-green-800"
-                      >
-                        Média
-                      </Badge>
-                    )}
-                    {screenshot.activity_level === "high" && (
-                      <Badge
-                        variant="outline"
-                        className="border-blue-200 bg-blue-100 text-blue-800"
-                      >
-                        Alta
-                      </Badge>
+                    {screenshot.activity_level && (
+                      <ActivityLevelBadge level={screenshot.activity_level} />
                     )}
                   </div>
                   {/* Info */}
