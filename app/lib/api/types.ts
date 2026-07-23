@@ -23,6 +23,13 @@ export interface User {
   phone: string | null
   profile: UserProfile
   preferred_language: "en" | "pt_br" | "es"
+  screenshots_enabled: boolean
+  screenshot_interval: number
+  idle_limit_interval: number
+  blur_screenshots: boolean
+  can_edit_time: boolean
+  can_delete_screenshot: boolean
+  timezone: string
   projects: ProjectRef[]
   managed_user_ids: string[]
   created_at: string

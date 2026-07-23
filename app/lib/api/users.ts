@@ -39,6 +39,13 @@ export const UsersService = {
     password_confirmation: string
     phone?: string
     profile?: UserProfile
+    screenshots_enabled?: boolean
+    screenshot_interval?: number
+    idle_limit_interval?: number
+    blur_screenshots?: boolean
+    can_edit_time?: boolean
+    can_delete_screenshot?: boolean
+    timezone?: string
   }): Promise<User> {
     return apiPost<User>(USERS_PATH, { user: data })
   },
@@ -52,6 +59,13 @@ export const UsersService = {
       profile: UserProfile
       password: string
       password_confirmation: string
+      screenshots_enabled: boolean
+      screenshot_interval: number
+      idle_limit_interval: number
+      blur_screenshots: boolean
+      can_edit_time: boolean
+      can_delete_screenshot: boolean
+      timezone: string
     }>,
   ): Promise<User> {
     return apiPatch<User>(`${USERS_PATH}/${id}`, { user: data })
