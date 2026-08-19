@@ -24,8 +24,6 @@ import {
   UsersIcon,
   ImageIcon,
   FileTextIcon,
-  CreditCardIcon,
-  LayersIcon,
 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "~/hooks/use-auth"
@@ -36,91 +34,78 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const isAdmin = user?.profile === "admin"
 
-  const navPrimary = React.useMemo(
-    () => {
-      const items: Array<{
-        title: string
-        url?: string
-        icon: React.ReactNode
-        children?: Array<{ title: string; url: string; icon: React.ReactNode }>
-      }> = [
+  const navPrimary = React.useMemo(() => {
+    const items: Array<{
+      title: string
+      url?: string
+      icon: React.ReactNode
+      children?: Array<{ title: string; url: string; icon: React.ReactNode }>
+    }> = [
+      {
+        title: t("nav.dashboard"),
+        url: "/",
+        icon: <LayoutDashboardIcon />,
+      },
+      {
+        title: t("nav.reports"),
+        icon: <FileTextIcon />,
+        children: [
+          {
+            title: "Screenshots",
+            url: "/screenshots",
+            icon: <ImageIcon />,
+          },
+          {
+            title: t("nav.timeline"),
+            url: "/reports/timeline",
+            icon: <FileTextIcon />,
+          },
+          {
+            title: t("nav.project-time"),
+            url: "/reports/project-time",
+            icon: <FileTextIcon />,
+          },
+          {
+            title: t("nav.task-time"),
+            url: "/reports/task-time",
+            icon: <FileTextIcon />,
+          },
+          {
+            title: t("nav.user-time"),
+            url: "/reports/user-time",
+            icon: <FileTextIcon />,
+          },
+        ],
+      },
+    ]
+
+    if (isAdmin) {
+      items.push(
         {
-          title: t("nav.dashboard"),
-          url: "/",
-          icon: <LayoutDashboardIcon />,
+          title: t("nav.users"),
+          url: "/users",
+          icon: <UserCogIcon />,
         },
         {
-          title: t("nav.reports"),
-          icon: <FileTextIcon />,
-          children: [
-            {
-              title: "Screenshots",
-              url: "/screenshots",
-              icon: <ImageIcon />,
-            },
-            {
-              title: t("nav.timeline"),
-              url: "/reports/timeline",
-              icon: <FileTextIcon />,
-            },
-            {
-              title: t("nav.project-time"),
-              url: "/reports/project-time",
-              icon: <FileTextIcon />,
-            },
-            {
-              title: t("nav.task-time"),
-              url: "/reports/task-time",
-              icon: <FileTextIcon />,
-            },
-            {
-              title: t("nav.user-time"),
-              url: "/reports/user-time",
-              icon: <FileTextIcon />,
-            },
-          ],
+          title: t("nav.customers"),
+          url: "/customers",
+          icon: <UsersIcon />,
         },
-      ]
+        {
+          title: t("nav.projects"),
+          url: "/projects",
+          icon: <FolderKanbanIcon />,
+        },
+        {
+          title: t("nav.agents"),
+          url: "/agents",
+          icon: <BotIcon />,
+        }
+      )
+    }
 
-      if (isAdmin) {
-        items.push(
-          {
-            title: t("nav.users"),
-            url: "/users",
-            icon: <UserCogIcon />,
-          },
-          {
-            title: t("nav.customers"),
-            url: "/customers",
-            icon: <UsersIcon />,
-          },
-          {
-            title: t("nav.projects"),
-            url: "/projects",
-            icon: <FolderKanbanIcon />,
-          },
-          {
-            title: t("nav.agents"),
-            url: "/agents",
-            icon: <BotIcon />,
-          },
-          {
-            title: t("nav.subscription"),
-            url: "/subscription",
-            icon: <CreditCardIcon />,
-          },
-          {
-            title: t("nav.plans-manage"),
-            url: "/admin/plans",
-            icon: <LayersIcon />,
-          },
-        )
-      }
-
-      return items
-    },
-    [t, isAdmin],
-  )
+    return items
+  }, [t, isAdmin])
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -149,6 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
         <NavUser
+          isAdmin={isAdmin}
           user={
             user
               ? { name: user.name, email: user.email }
