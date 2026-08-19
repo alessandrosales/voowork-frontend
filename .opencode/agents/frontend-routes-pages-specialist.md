@@ -47,3 +47,5 @@ Implement and refactor **page-level features** — routes, layout integration, d
 - Summarize route behavior, API integration points, and user-visible changes.
 - Note any new shared components that should be extracted to a feature specialist.
 - Hand off to `frontend-testing-validation-specialist` when page behavior changed.
+
+Final report ≤ 8 lines. No diff re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.

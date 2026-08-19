@@ -16,6 +16,7 @@ import { toast } from "sonner"
 
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
+import { Checkbox } from "~/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,10 +25,10 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
 import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -52,6 +53,12 @@ import {
 } from "~/components/ui/dialog"
 import { Field, FieldGroup, FieldLabel } from "~/components/ui/field"
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "~/components/ui/tabs"
+import {
   Table,
   TableBody,
   TableCell,
@@ -69,6 +76,8 @@ import {
   SearchIcon,
   ShieldIcon,
   FolderIcon,
+  SettingsIcon,
+  UserIcon,
 } from "lucide-react"
 
 import { useAuth } from "~/hooks/use-auth"
@@ -85,6 +94,32 @@ const PROFILE_OPTIONS: {
   { value: "common", label: "Comum", variant: "secondary" },
   { value: "manager", label: "Gestor", variant: "default" },
   { value: "admin", label: "Admin", variant: "default" },
+]
+
+const INTERVAL_OPTIONS = [
+  { value: 180, label: "3 minutos" },
+  { value: 300, label: "5 minutos" },
+  { value: 540, label: "9 minutos" },
+  { value: 720, label: "12 minutos" },
+  { value: 960, label: "16 minutos" },
+  { value: 1200, label: "20 minutos" },
+  { value: 1800, label: "30 minutos" },
+]
+
+const TIMEZONE_OPTIONS = [
+  { value: "America/Sao_Paulo", label: "Brasília (UTC-3)" },
+  { value: "America/Noronha", label: "Fernando de Noronha (UTC-2)" },
+  { value: "America/Belem", label: "Belém (UTC-3)" },
+  { value: "America/Fortaleza", label: "Fortaleza (UTC-3)" },
+  { value: "America/Recife", label: "Recife (UTC-3)" },
+  { value: "America/Maceio", label: "Maceió (UTC-3)" },
+  { value: "America/Cuiaba", label: "Cuiabá (UTC-4)" },
+  { value: "America/Campo_Grande", label: "Campo Grande (UTC-4)" },
+  { value: "America/Manaus", label: "Manaus (UTC-4)" },
+  { value: "America/Porto_Velho", label: "Porto Velho (UTC-4)" },
+  { value: "America/Boa_Vista", label: "Boa Vista (UTC-4)" },
+  { value: "America/Rio_Branco", label: "Rio Branco (UTC-5)" },
+  { value: "America/Eirunepe", label: "Eirunepé (UTC-5)" },
 ]
 
 function getProfileOption(
@@ -141,6 +176,17 @@ export function UsersTable() {
   const [formPassword, setFormPassword] = React.useState("")
   const [formPasswordConfirmation, setFormPasswordConfirmation] =
     React.useState("")
+  const [formScreenshotsEnabled, setFormScreenshotsEnabled] =
+    React.useState(true)
+  const [formScreenshotInterval, setFormScreenshotInterval] =
+    React.useState(300)
+  const [formIdleLimitInterval, setFormIdleLimitInterval] = React.useState(300)
+  const [formBlurScreenshots, setFormBlurScreenshots] = React.useState(false)
+  const [formCanEditTime, setFormCanEditTime] = React.useState(false)
+  const [formCanDeleteScreenshot, setFormCanDeleteScreenshot] =
+    React.useState(false)
+  const [formTimezone, setFormTimezone] =
+    React.useState("America/Sao_Paulo")
 
   // --- Fetch data ---
   const fetchUsers = React.useCallback(() => {
@@ -171,6 +217,13 @@ export function UsersTable() {
     setFormProfile("common")
     setFormPassword("")
     setFormPasswordConfirmation("")
+    setFormScreenshotsEnabled(true)
+    setFormScreenshotInterval(300)
+    setFormIdleLimitInterval(300)
+    setFormBlurScreenshots(false)
+    setFormCanEditTime(false)
+    setFormCanDeleteScreenshot(false)
+    setFormTimezone("America/Sao_Paulo")
     setFormError(null)
     setFormDialogOpen(true)
   }
@@ -183,6 +236,13 @@ export function UsersTable() {
     setFormProfile(getProfileOption(user.profile)?.value ?? "common")
     setFormPassword("")
     setFormPasswordConfirmation("")
+    setFormScreenshotsEnabled(user.screenshots_enabled)
+    setFormScreenshotInterval(user.screenshot_interval)
+    setFormIdleLimitInterval(user.idle_limit_interval)
+    setFormBlurScreenshots(user.blur_screenshots)
+    setFormCanEditTime(user.can_edit_time)
+    setFormCanDeleteScreenshot(user.can_delete_screenshot)
+    setFormTimezone(user.timezone)
     setFormError(null)
     setFormDialogOpen(true)
   }
@@ -194,7 +254,7 @@ export function UsersTable() {
 
     try {
       if (editingUser) {
-        await UsersService.update(editingUser.id, {
+        const updatePayload: Parameters<typeof UsersService.update>[1] = {
           name: formName,
           email: formEmail,
           phone: formPhone || undefined,
@@ -205,7 +265,15 @@ export function UsersTable() {
                 password_confirmation: formPasswordConfirmation,
               }
             : {}),
-        })
+          screenshots_enabled: formScreenshotsEnabled,
+          screenshot_interval: formScreenshotInterval,
+          idle_limit_interval: formIdleLimitInterval,
+          blur_screenshots: formBlurScreenshots,
+          can_edit_time: formCanEditTime,
+          can_delete_screenshot: formCanDeleteScreenshot,
+          timezone: formTimezone,
+        }
+        await UsersService.update(editingUser.id, updatePayload)
         toast.success("Usuário atualizado com sucesso.")
       } else {
         if (!formPassword || formPassword.length < 8) {
@@ -225,6 +293,13 @@ export function UsersTable() {
           profile: formProfile,
           password: formPassword,
           password_confirmation: formPasswordConfirmation,
+          screenshots_enabled: formScreenshotsEnabled,
+          screenshot_interval: formScreenshotInterval,
+          idle_limit_interval: formIdleLimitInterval,
+          blur_screenshots: formBlurScreenshots,
+          can_edit_time: formCanEditTime,
+          can_delete_screenshot: formCanDeleteScreenshot,
+          timezone: formTimezone,
         })
         toast.success("Usuário criado com sucesso.")
       }
@@ -638,7 +713,7 @@ export function UsersTable() {
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
         <DialogContent
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="sm:max-w-md"
+          className="sm:max-w-lg"
         >
           <DialogHeader>
             <DialogTitle>
@@ -657,95 +732,251 @@ export function UsersTable() {
             </div>
           )}
 
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Nome</FieldLabel>
-              <Input
-                id="name"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Nome completo"
-                required
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">E-mail</FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                placeholder="email@exemplo.com"
-                required
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="phone">Telefone</FieldLabel>
-              <Input
-                id="phone"
-                type="tel"
-                value={formPhone}
-                onChange={(e) => setFormPhone(e.target.value)}
-                placeholder="+5511999999999"
-                disabled={isSubmitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="profile">Perfil</FieldLabel>
-              <Select
-                value={formProfile}
-                onValueChange={(val) =>
-                  setFormProfile(val as UserProfile)
-                }
-                disabled={isSubmitting || isEditingSelf}
-              >
-                <SelectTrigger id="profile" className="w-full">
-                  <SelectValue placeholder="Selecione um perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFILE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password">
-                {editingUser
-                  ? "Nova senha (deixe em branco para manter)"
-                  : "Senha"}
-              </FieldLabel>
-              <Input
-                id="password"
-                type="password"
-                value={formPassword}
-                onChange={(e) => setFormPassword(e.target.value)}
-                placeholder={editingUser ? "Nova senha" : "Mínimo 8 caracteres"}
-                minLength={editingUser ? undefined : 8}
-                required={!editingUser}
-                disabled={isSubmitting}
-              />
-            </Field>
-            {formPassword && (
-              <Field>
-                <FieldLabel htmlFor="password-confirmation">
-                  Confirmar Senha
-                </FieldLabel>
-                <Input
-                  id="password-confirmation"
-                  type="password"
-                  value={formPasswordConfirmation}
-                  onChange={(e) => setFormPasswordConfirmation(e.target.value)}
-                  placeholder="Repita a senha"
-                  disabled={isSubmitting}
-                />
-              </Field>
-            )}
-          </FieldGroup>
+          <Tabs defaultValue="dados" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="dados" className="flex-1">
+                <UserIcon className="size-4" />
+                Dados
+              </TabsTrigger>
+              <TabsTrigger value="configuracoes" className="flex-1">
+                <SettingsIcon className="size-4" />
+                Configurações
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dados">
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="name">Nome</FieldLabel>
+                  <Input
+                    id="name"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="Nome completo"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="email">E-mail</FieldLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="phone">Telefone</FieldLabel>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="+5511999999999"
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="profile">Perfil</FieldLabel>
+                  <Select
+                    value={formProfile}
+                    onValueChange={(val) =>
+                      setFormProfile(val as UserProfile)
+                    }
+                    disabled={isSubmitting || isEditingSelf}
+                  >
+                    <SelectTrigger id="profile" className="w-full">
+                      <SelectValue placeholder="Selecione um perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROFILE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="password">
+                    {editingUser
+                      ? "Nova senha (deixe em branco para manter)"
+                      : "Senha"}
+                  </FieldLabel>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formPassword}
+                    onChange={(e) => setFormPassword(e.target.value)}
+                    placeholder={editingUser ? "Nova senha" : "Mínimo 8 caracteres"}
+                    minLength={editingUser ? undefined : 8}
+                    required={!editingUser}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                {formPassword && (
+                  <Field>
+                    <FieldLabel htmlFor="password-confirmation">
+                      Confirmar Senha
+                    </FieldLabel>
+                    <Input
+                      id="password-confirmation"
+                      type="password"
+                      value={formPasswordConfirmation}
+                      onChange={(e) => setFormPasswordConfirmation(e.target.value)}
+                      placeholder="Repita a senha"
+                      disabled={isSubmitting}
+                    />
+                  </Field>
+                )}
+              </FieldGroup>
+            </TabsContent>
+
+            <TabsContent value="configuracoes">
+              <FieldGroup>
+                {/* Screenshots enabled */}
+                <Field orientation="horizontal" className="gap-3">
+                  <Checkbox
+                    id="screenshots-enabled"
+                    checked={formScreenshotsEnabled}
+                    onCheckedChange={(checked) =>
+                      setFormScreenshotsEnabled(!!checked)
+                    }
+                    disabled={isSubmitting}
+                  />
+                  <Label htmlFor="screenshots-enabled" className="font-normal">
+                    Screenshots habilitados
+                  </Label>
+                </Field>
+
+                {/* Screenshot interval — visible only when screenshots are enabled */}
+                {formScreenshotsEnabled && (
+                  <Field>
+                    <FieldLabel htmlFor="screenshot-interval">
+                      Intervalo de screenshots
+                    </FieldLabel>
+                    <Select
+                      value={String(formScreenshotInterval)}
+                      onValueChange={(val) =>
+                        setFormScreenshotInterval(Number(val))
+                      }
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger id="screenshot-interval" className="w-full">
+                        <SelectValue placeholder="Selecione o intervalo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INTERVAL_OPTIONS.map((opt) => (
+                          <SelectItem
+                            key={opt.value}
+                            value={String(opt.value)}
+                          >
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+
+                {/* Idle limit interval */}
+                <Field>
+                  <FieldLabel htmlFor="idle-limit-interval">
+                    Limite de tempo ocioso
+                  </FieldLabel>
+                  <Select
+                    value={String(formIdleLimitInterval)}
+                    onValueChange={(val) =>
+                      setFormIdleLimitInterval(Number(val))
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger id="idle-limit-interval" className="w-full">
+                      <SelectValue placeholder="Selecione o limite" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INTERVAL_OPTIONS.map((opt) => (
+                        <SelectItem
+                          key={opt.value}
+                          value={String(opt.value)}
+                        >
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                {/* Blur screenshots */}
+                <Field orientation="horizontal" className="gap-3">
+                  <Checkbox
+                    id="blur-screenshots"
+                    checked={formBlurScreenshots}
+                    onCheckedChange={(checked) =>
+                      setFormBlurScreenshots(!!checked)
+                    }
+                    disabled={isSubmitting}
+                  />
+                  <Label htmlFor="blur-screenshots" className="font-normal">
+                    Desfocar screenshots
+                  </Label>
+                </Field>
+
+                {/* Can edit time */}
+                <Field orientation="horizontal" className="gap-3">
+                  <Checkbox
+                    id="can-edit-time"
+                    checked={formCanEditTime}
+                    onCheckedChange={(checked) => setFormCanEditTime(!!checked)}
+                    disabled={isSubmitting}
+                  />
+                  <Label htmlFor="can-edit-time" className="font-normal">
+                    Pode editar tempo
+                  </Label>
+                </Field>
+
+                {/* Can delete screenshot */}
+                <Field orientation="horizontal" className="gap-3">
+                  <Checkbox
+                    id="can-delete-screenshot"
+                    checked={formCanDeleteScreenshot}
+                    onCheckedChange={(checked) =>
+                      setFormCanDeleteScreenshot(!!checked)
+                    }
+                    disabled={isSubmitting}
+                  />
+                  <Label htmlFor="can-delete-screenshot" className="font-normal">
+                    Pode excluir screenshots
+                  </Label>
+                </Field>
+
+                {/* Timezone */}
+                <Field>
+                  <FieldLabel htmlFor="timezone">Fuso horário</FieldLabel>
+                  <Select
+                    value={formTimezone}
+                    onValueChange={(val) => setFormTimezone(val)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger id="timezone" className="w-full">
+                      <SelectValue placeholder="Selecione o fuso horário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEZONE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter>
             <Button

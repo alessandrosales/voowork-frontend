@@ -107,36 +107,15 @@ When automated verification evidence is absent, note it in the audit and recomme
 - [ ] Diff is small and reviewable
 - [ ] Naming consistent with existing codebase patterns
 
-## Verdict format
-
-Always return:
+## Verdict format (terse)
 
 ```
 ## Verdict: PASS | PASS WITH WARNINGS | FAIL
-
-### Summary
-<1-2 sentences>
-
-### Checklist results
-- Request fidelity: ✅/⚠️/❌ — <note>
-- Plan alignment: ✅/⚠️/❌/N/A — <note>
-- Architecture & layers: ✅/⚠️/❌ — <note>
-- UI & design system: ✅/⚠️/❌ — <note>
-- Performance & React: ✅/⚠️/❌ — <note>
-- Quality & verification: ✅/⚠️/❌ — <note>
-
-### Issues (if any)
-| Priority | Issue | Route to |
-|----------|-------|----------|
-| critical | ... | frontend-routes-pages-specialist |
-| warning | ... | frontend-shadcn-ui-specialist |
-
-### Remediation steps
-1. ...
-
-### Safe to merge?
-yes | no | yes with follow-up
+- <issue/risk> — only if it changes the verdict, one line each
+Safe to merge: yes | no | yes with follow-up
 ```
+
+Skip Summary/Checklist/Evidence unless FAIL — then list only the blocking issues. Follow `.opencode/rules/conciseness.md`. Total output under ~10 lines.
 
 ## Routing remediation
 

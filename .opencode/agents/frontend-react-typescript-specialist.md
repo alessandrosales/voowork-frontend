@@ -45,3 +45,5 @@ Implement and refactor **typed React logic** — hooks, stores, utilities, and c
 - Implement in small, reviewable steps.
 - Summarize what changed, why, and which files were touched.
 - Hand off to `frontend-testing-validation-specialist` when behavior changed.
+
+Final report ≤ 8 lines. No diff re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.

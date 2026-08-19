@@ -44,3 +44,5 @@ Own the **design-system primitive layer** — shadcn components, variants, and l
 - Document which shadcn components were added or modified.
 - Note any breaking API changes to primitives for downstream feature components.
 - Hand off to `frontend-testing-validation-specialist` when behavior or a11y changed.
+
+Final report ≤ 8 lines. No diff re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.
