@@ -45,3 +45,5 @@ Build and refactor **domain and shared components** — feature folders, forms, 
 - List components created/moved/updated and their intended consumers (pages or other components).
 - Flag when a change requires a matching page update in `frontend-routes-pages-specialist`.
 - Hand off to `frontend-testing-validation-specialist` when behavior changed.
+
+Final report ≤ 8 lines: what changed, files touched, verification, blockers (only if real). No diff re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.

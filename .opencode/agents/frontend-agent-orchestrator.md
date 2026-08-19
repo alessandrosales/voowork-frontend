@@ -131,13 +131,16 @@ Core orchestration protocol:
   - "Delivery incomplete - follow-up required"
 - If incomplete, use the auditor's remediation list and route back to the right specialist or planner.
 
-8. Output contract
+8. Output contract (terse)
 
-- Always return:
-  - Flow used
-  - Context passed to each phase (concise)
-  - Validation checklist and outcome
-  - Remaining risks or follow-up items
+Return at most a few short lines:
+
+- Status — done | needs remediation | blocked
+- Flow — `planner → specialist → auditor` (one line)
+- Audit — PASS/FAIL (one word)
+- Risks — only if real; omit otherwise
+
+Do not restate handoff packets or recap what each agent did. Follow `.opencode/rules/conciseness.md`.
 
 Decision principles:
 

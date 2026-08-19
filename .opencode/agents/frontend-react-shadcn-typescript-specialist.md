@@ -46,3 +46,5 @@ When routing, pass:
 ## Token efficiency
 
 Prefer **direct invocation** of a specialized subagent over this router when task scope is already clear.
+
+Delegation summary ≤ 5 lines. Follow `.opencode/rules/conciseness.md`.

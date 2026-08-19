@@ -46,3 +46,5 @@ Improve **rendering efficiency, data-flow latency, and bundle impact** without s
 - State the performance problem, root cause, and fix with expected impact.
 - List files changed and any tradeoffs (complexity vs gain).
 - Hand off to `frontend-testing-validation-specialist` when behavior could regress.
+
+Final report ≤ 8 lines. No diff re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.

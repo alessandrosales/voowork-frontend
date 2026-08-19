@@ -43,14 +43,17 @@ Run **automated and operational verification** — typecheck, lint, tests, and f
 | Domain/shared components | `frontend-feature-components-specialist` |
 | Plan/scope mismatch | `frontend-implementation-planner` |
 
-## Output contract
+## Output contract (terse)
 
-Always return:
-- Validation checklist and results (pass/fail per item)
-- Commands run and outcomes
-- Overall verdict (`PASS` / `FAIL`)
-- If `FAIL`: prioritized remediation list with specialist assignments
-- Residual risks or untested edge cases
+```
+## Verification
+- typecheck: pass/fail
+- lint: pass/fail
+- tests: pass/fail/skip
+- Blockers: <only if any>
+```
+
+One line per check. No raw command output re-paste, no narrative. Follow `.opencode/rules/conciseness.md`.
 
 ## Constraint
 
