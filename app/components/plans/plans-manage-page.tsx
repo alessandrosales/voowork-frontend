@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import {
   PlusIcon,
   PencilIcon,
-  TrashIcon,
+  BanIcon,
   AlertTriangleIcon,
 } from "lucide-react"
 
@@ -161,7 +161,7 @@ export function PlansManagePage() {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await PlansService.list()
+      const data = await PlansService.listForManagement()
       setPlans(data)
     } catch (err) {
       if (err instanceof ApiError) setError(err.message)
@@ -227,8 +227,8 @@ export function PlansManagePage() {
   const executeDeletePlan = async () => {
     if (!planToDelete) return
     try {
-      await PlansService.destroy(planToDelete.slug)
-      toast.success(t("plans-manage.deleted"))
+      await PlansService.update(planToDelete.slug, { plan: { active: false } })
+      toast.success(t("plans-manage.deactivated"))
       setDeleteDialogOpen(false)
       setPlanToDelete(null)
       fetchPlans()
@@ -299,11 +299,10 @@ export function PlansManagePage() {
   const executeDeletePrice = async () => {
     if (!priceToDelete) return
     try {
-      await PlanPricesService.destroy(
-        priceToDelete.planSlug,
-        priceToDelete.price.id
-      )
-      toast.success(t("plans-manage.price-deleted"))
+      await PlanPricesService.update(priceToDelete.planSlug, priceToDelete.price.id, {
+        plan_price: { active: false },
+      })
+      toast.success(t("plans-manage.price-deactivated"))
       setDeleteDialogOpen(false)
       setPriceToDelete(null)
       fetchPlans()
@@ -416,7 +415,7 @@ export function PlansManagePage() {
                       onClick={() => confirmDeletePlan(plan)}
                       aria-label={t("plans-manage.confirm-delete-btn")}
                     >
-                      <TrashIcon className="size-4 text-destructive" />
+                      <BanIcon className="size-4 text-destructive" />
                     </Button>
                   </div>
                 </CardHeader>
@@ -490,7 +489,7 @@ export function PlansManagePage() {
                                 "plans-manage.confirm-delete-price"
                               )}
                             >
-                              <TrashIcon className="text-destructive" />
+                              <BanIcon className="text-destructive" />
                             </Button>
                           </CardFooter>
                         </Card>

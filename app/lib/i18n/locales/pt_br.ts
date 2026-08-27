@@ -71,7 +71,7 @@ const ptBr = {
   },
   "plans-manage": {
     title: "Gerenciar Planos",
-    subtitle: "Crie, edite e remova planos e preços",
+    subtitle: "Crie, edite e desative planos e preços",
     "admin-only": "Acesso restrito a administradores",
     "admin-only-description":
       "Apenas administradores podem criar ou editar planos e preços.",
@@ -102,17 +102,19 @@ const ptBr = {
     created: "Plano criado com sucesso.",
     updated: "Plano atualizado com sucesso.",
     deleted: "Plano removido com sucesso.",
-    "confirm-delete": 'Remover plano "{{name}}"?',
+    deactivated: "Plano desativado com sucesso.",
+    "confirm-delete": 'Desativar plano "{{name}}"?',
     "delete-plan-warning":
-      "Esta ação não pode ser desfeita. Todas as assinaturas vinculadas a este plano serão mantidas.",
+      "O plano ficará indisponível para novas assinaturas, mas será mantido no histórico.",
     "delete-price-warning":
-      "Esta ação não pode ser desfeita. Assinaturas com este preço não serão afetadas.",
-    "confirm-delete-btn": "Sim, excluir",
+      "O preço ficará indisponível para novas assinaturas, mas será mantido no histórico.",
+    "confirm-delete-btn": "Sim, desativar",
     "save-error": "Erro ao salvar plano.",
     "delete-error": "Erro ao remover plano.",
     "price-created": "Preço criado com sucesso.",
     "price-updated": "Preço atualizado com sucesso.",
     "price-deleted": "Preço removido com sucesso.",
+    "price-deactivated": "Preço desativado com sucesso.",
     "confirm-delete-price": "Tem certeza que deseja remover este preço?",
   },
   common: {

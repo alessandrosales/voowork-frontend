@@ -21,6 +21,10 @@ export const PlansService = {
     return apiGet<Plan[]>(PLANS_PATH, params)
   },
 
+  async listForManagement(): Promise<Plan[]> {
+    return apiGet<Plan[]>(`${PLANS_PATH}/manage`)
+  },
+
   async get(slug: string): Promise<Plan> {
     return apiGet<Plan>(`${PLANS_PATH}/${slug}`)
   },
