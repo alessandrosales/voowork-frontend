@@ -7,6 +7,7 @@ import { apiGet, apiPost, apiPatch, apiDelete } from "./client"
 import type {
   Subscription,
   CreateCheckoutResponse,
+  CreateCustomerPortalResponse,
   UpdateSubscriptionResponse,
 } from "./types"
 
@@ -35,7 +36,14 @@ export const SubscriptionsService = {
   },
 
   /** Cancela a assinatura */
-  async cancel(): Promise<void> {
-    return apiDelete(SUBSCRIPTION_PATH)
+  async cancel(): Promise<UpdateSubscriptionResponse> {
+    return apiDelete<UpdateSubscriptionResponse>(SUBSCRIPTION_PATH)
+  },
+
+  /** Abre o portal Stripe para pagamento, faturas e cancelamento. */
+  async createPortal(return_url: string): Promise<CreateCustomerPortalResponse> {
+    return apiPost<CreateCustomerPortalResponse>(`${SUBSCRIPTION_PATH}/portal`, {
+      return_url,
+    })
   },
 }

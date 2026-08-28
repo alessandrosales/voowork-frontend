@@ -42,7 +42,7 @@ const en = {
     "checkout-error": "Error starting checkout.",
     "cancel-title": "Cancel Subscription",
     "cancel-description":
-      "Are you sure? You will lose access to paid features at the end of the current period.",
+      "Are you sure? Access to paid features will end immediately.",
     "confirm-cancel": "Yes, cancel",
     canceling: "Canceling...",
     "cancel-success": "Subscription canceled successfully.",
@@ -59,6 +59,7 @@ const en = {
     "switch-plan": "Switch plan",
     upgrade: "Upgrade",
     downgrade: "Downgrade",
+    "currency-mismatch": "Unavailable in another currency",
     status: {
       trialing: "In Trial",
       active: "Active",

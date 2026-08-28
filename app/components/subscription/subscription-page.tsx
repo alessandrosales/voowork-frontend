@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useNavigate } from "react-router"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import {
@@ -15,21 +14,32 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
 import { Badge } from "~/components/ui/badge"
 import { SubscriptionsService, PlansService, ApiError } from "~/lib/api"
-import type { Subscription, Plan } from "~/lib/api/types"
+import type { Plan, PlanPrice, Subscription } from "~/lib/api/types"
 import { SubscriptionPlan } from "./subscription-plan"
-import { SubscriptionStatusBadge } from "./subscription-status"
 import { CancelDialog } from "./cancel-dialog"
 import { useAuth } from "~/hooks/use-auth"
 
+const LANGUAGE_CURRENCY = {
+  pt_br: "BRL",
+  en: "USD",
+  es: "EUR",
+} as const
+
+function currencyForLanguage(language: string): string {
+  const normalizedLanguage = language.replace("-", "_")
+  return LANGUAGE_CURRENCY[normalizedLanguage as keyof typeof LANGUAGE_CURRENCY] ?? "USD"
+}
+
 export function SubscriptionPage() {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const selectedCurrency = currencyForLanguage(i18n.language)
 
   // ──────────────────────────────────────────────────────────────
   // Admin-only gate: only users with profile "admin" can manage
@@ -44,6 +54,9 @@ export function SubscriptionPage() {
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
+  const [isStartingPriceId, setIsStartingPriceId] = useState<string | null>(null)
+  const [isChangingPlan, setIsChangingPlan] = useState(false)
+  const [checkoutReturned, setCheckoutReturned] = useState(false)
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -52,7 +65,7 @@ export function SubscriptionPage() {
     try {
       const [subRes, plansData] = await Promise.all([
         SubscriptionsService.get(),
-        PlansService.list(),
+        PlansService.list({ currency: selectedCurrency }),
       ])
       setSubscription(subRes.subscription)
       setPlans(plansData)
@@ -65,18 +78,44 @@ export function SubscriptionPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [t])
+  }, [selectedCurrency, t])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (!params.has("session_id")) return
+
+    setCheckoutReturned(true)
+    let attempts = 0
+    const interval = window.setInterval(async () => {
+      attempts += 1
+      try {
+        const result = await SubscriptionsService.get()
+        if (result.subscription) {
+          setSubscription(result.subscription)
+          setCheckoutReturned(false)
+          window.clearInterval(interval)
+        }
+      } catch {
+        // The regular page refresh remains available if the webhook is delayed.
+      }
+
+      if (attempts >= 5) window.clearInterval(interval)
+    }, 1500)
+    window.history.replaceState({}, "", window.location.pathname)
+    return () => window.clearInterval(interval)
+  }, [])
+
   // --- Redirect to Stripe Checkout ---
   const handleStartSubscription = async (planPriceId: string) => {
     const successUrl = `${window.location.origin}/subscription`
-    const cancelUrl = `${window.location.origin}/planos`
+    const cancelUrl = `${window.location.origin}/subscription`
 
     try {
+      setIsStartingPriceId(planPriceId)
       const res = await SubscriptionsService.createCheckout({
         plan_price_id: planPriceId,
         success_url: successUrl,
@@ -89,6 +128,21 @@ export function SubscriptionPage() {
       } else {
         toast.error(t("subscription.checkout-error"))
       }
+    } finally {
+      setIsStartingPriceId(null)
+    }
+  }
+
+  const handleChangePlan = async (planPriceId: string) => {
+    setIsChangingPlan(true)
+    try {
+      const result = await SubscriptionsService.update({ plan_price_id: planPriceId })
+      setSubscription(result.subscription)
+      toast.success("Plano atualizado com sucesso.")
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Erro ao trocar de plano.")
+    } finally {
+      setIsChangingPlan(false)
     }
   }
 
@@ -96,10 +150,10 @@ export function SubscriptionPage() {
   const handleCancel = async () => {
     setIsCanceling(true)
     try {
-      await SubscriptionsService.cancel()
-      toast.success(t("subscription.cancel-success"))
+      const result = await SubscriptionsService.cancel()
+      setSubscription(result.subscription)
+      toast.success("Assinatura cancelada. O acesso foi encerrado.")
       setCancelDialogOpen(false)
-      fetchData()
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message)
@@ -113,7 +167,17 @@ export function SubscriptionPage() {
 
   // --- Open Stripe Customer Portal ---
   const handleManageBilling = () => {
-    toast.info(t("subscription.portal-coming-soon"))
+    SubscriptionsService.createPortal(`${window.location.origin}/subscription`)
+      .then(({ portal_url }) => {
+        window.location.href = portal_url
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          toast.error(err.message)
+        } else {
+          toast.error(t("subscription.checkout-error"))
+        }
+      })
   }
 
   // --- Admin-only gate ---
@@ -191,54 +255,23 @@ export function SubscriptionPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 px-4 lg:px-6 lg:grid-cols-3">
-            {/* Main content — plan details */}
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid gap-5 px-4 lg:px-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="flex flex-col gap-5">
+              {checkoutReturned && !subscription && (
+                <Card className="border-primary/40 bg-primary/5">
+                  <CardContent className="pt-4 text-sm text-muted-foreground">
+                    Seu pagamento foi recebido. Estamos confirmando sua assinatura; esta página será atualizada automaticamente.
+                  </CardContent>
+                </Card>
+              )}
               {subscription ? (
                 <>
-                  {/* Active subscription */}
                   <SubscriptionPlan
                     subscription={subscription}
                     plans={plans}
-                    onChangePlan={handleStartSubscription}
+                    onChangePlan={handleChangePlan}
+                    isChangingPlan={isChangingPlan}
                   />
-
-                  {/* Status card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        {t("subscription.current-status")}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <SubscriptionStatusBadge subscription={subscription} />
-                    </CardContent>
-                  </Card>
-
-                  {/* Actions */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        {t("subscription.actions")}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={handleManageBilling}
-                      >
-                        <CreditCardIcon />
-                        {t("subscription.manage-payment")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="text-destructive"
-                        onClick={() => setCancelDialogOpen(true)}
-                      >
-                        {t("subscription.cancel")}
-                      </Button>
-                    </CardContent>
-                  </Card>
                 </>
               ) : (
                 <>
@@ -252,41 +285,23 @@ export function SubscriptionPage() {
                         {t("subscription.choose-plan-cta")}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      {plans.map((plan) => {
-                        const price = plan.prices[0]
-                        if (!price) return null
-
-                        return (
-                          <div
-                            key={plan.id}
-                            className="flex items-center justify-between rounded-lg border p-4"
-                          >
-                            <div>
-                              <p className="font-medium">{plan.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {plan.description}
-                              </p>
-                            </div>
-                            <Button
-                              onClick={() =>
-                                handleStartSubscription(price.id)
-                              }
-                            >
-                              {t("subscription.start")}
-                              <ArrowRightIcon />
-                            </Button>
-                          </div>
-                        )
-                      })}
+                    <CardContent className="grid gap-4 md:grid-cols-2">
+                      {plans.map((plan) => (
+                        <PlanOption
+                          key={plan.id}
+                          plan={plan}
+                          isStartingPriceId={isStartingPriceId}
+                          onStart={handleStartSubscription}
+                          startLabel={t("subscription.start")}
+                        />
+                      ))}
                     </CardContent>
                   </Card>
                 </>
               )}
             </div>
 
-            {/* Sidebar — billing summary */}
-            <div className="space-y-4">
+            <aside className="flex flex-col gap-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-medium">
@@ -343,6 +358,20 @@ export function SubscriptionPage() {
                     </p>
                   )}
                 </CardContent>
+                {subscription && (
+                  <CardFooter className="flex flex-col items-stretch gap-2 border-t">
+                    <Button variant="outline" onClick={handleManageBilling}>
+                      <CreditCardIcon data-icon="inline-start" />
+                      {t("subscription.manage-payment")}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setCancelDialogOpen(true)}
+                    >
+                      {t("subscription.cancel")}
+                    </Button>
+                  </CardFooter>
+                )}
               </Card>
 
               {/* Past due alert */}
@@ -361,7 +390,7 @@ export function SubscriptionPage() {
                   </CardContent>
                 </Card>
               )}
-            </div>
+            </aside>
           </div>
         </div>
       </div>
@@ -382,4 +411,75 @@ function formatCurrency(amount: number, currency: string): string {
     style: "currency",
     currency,
   }).format(amount)
+}
+
+function PlanOption({
+  plan,
+  isStartingPriceId,
+  onStart,
+  startLabel,
+}: {
+  plan: Plan
+  isStartingPriceId: string | null
+  onStart: (priceId: string) => void
+  startLabel: string
+}) {
+  const prices = [...plan.prices].sort((a, b) => a.amount - b.amount)
+  if (prices.length === 0) return null
+
+  return (
+    <Card className="h-full gap-5 border-border/70 bg-muted/20 transition-colors hover:bg-muted/40">
+      <CardHeader className="gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-base">{plan.name}</CardTitle>
+          {plan.trial_days > 0 && (
+            <Badge variant="outline" className="shrink-0">
+              {plan.trial_days} dias de teste
+            </Badge>
+          )}
+        </div>
+        {plan.description && (
+          <CardDescription className="text-sm">{plan.description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardFooter className="mt-auto flex flex-col items-stretch gap-2">
+        {prices.map((price) => (
+          <PriceStartButton
+            key={price.id}
+            price={price}
+            isStarting={isStartingPriceId !== null}
+            onStart={onStart}
+            startLabel={startLabel}
+          />
+        ))}
+      </CardFooter>
+    </Card>
+  )
+}
+
+function PriceStartButton({
+  price,
+  isStarting,
+  onStart,
+  startLabel,
+}: {
+  price: PlanPrice
+  isStarting: boolean
+  onStart: (priceId: string) => void
+  startLabel: string
+}) {
+  const interval = price.interval === "month" ? "mês" : "ano"
+
+  return (
+    <Button
+      className="w-full justify-between"
+      disabled={isStarting}
+      onClick={() => onStart(price.id)}
+    >
+      {isStarting
+        ? "Abrindo checkout..."
+        : `${startLabel} · ${formatCurrency(price.amount, price.currency)}/${interval}`}
+      <ArrowRightIcon data-icon="inline-end" />
+    </Button>
+  )
 }

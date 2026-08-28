@@ -90,6 +90,10 @@ export interface CreateCheckoutResponse {
   checkout_url: string
 }
 
+export interface CreateCustomerPortalResponse {
+  portal_url: string
+}
+
 export interface UpdateSubscriptionResponse {
   subscription: Subscription
 }

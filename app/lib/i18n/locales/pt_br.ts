@@ -42,7 +42,7 @@ const ptBr = {
     "checkout-error": "Erro ao iniciar checkout.",
     "cancel-title": "Cancelar Assinatura",
     "cancel-description":
-      "Tem certeza? Você perderá acesso aos recursos pagos no final do período vigente.",
+      "Tem certeza? O acesso aos recursos pagos será encerrado imediatamente.",
     "confirm-cancel": "Sim, cancelar",
     canceling: "Cancelando...",
     "cancel-success": "Assinatura cancelada com sucesso.",
@@ -59,6 +59,7 @@ const ptBr = {
     "switch-plan": "Trocar de plano",
     upgrade: "Fazer Upgrade",
     downgrade: "Fazer Downgrade",
+    "currency-mismatch": "Indisponível em outra moeda",
     status: {
       trialing: "Em Trial",
       active: "Ativa",

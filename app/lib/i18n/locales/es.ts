@@ -42,7 +42,7 @@ const es = {
     "checkout-error": "Error al iniciar checkout.",
     "cancel-title": "Cancelar Suscripción",
     "cancel-description":
-      "¿Está seguro? Perderá acceso a las funciones pagas al final del período vigente.",
+      "¿Está seguro? El acceso a las funciones pagas terminará inmediatamente.",
     "confirm-cancel": "Sí, cancelar",
     canceling: "Cancelando...",
     "cancel-success": "Suscripción cancelada con éxito.",
@@ -59,6 +59,7 @@ const es = {
     "switch-plan": "Cambiar de plan",
     upgrade: "Mejorar",
     downgrade: "Degradar",
+    "currency-mismatch": "No disponible en otra moneda",
     status: {
       trialing: "En Prueba",
       active: "Activa",

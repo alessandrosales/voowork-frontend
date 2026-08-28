@@ -1,7 +1,10 @@
 "use client"
 
 import { useTranslation } from "react-i18next"
+import { ArrowRightIcon } from "lucide-react"
+
 import { Button } from "~/components/ui/button"
+import { Badge } from "~/components/ui/badge"
 import {
   Card,
   CardContent,
@@ -9,108 +12,105 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
-import { CheckIcon, ArrowRightIcon } from "lucide-react"
-import { cn } from "~/lib/utils"
-import type { Subscription, Plan } from "~/lib/api/types"
+import type { Plan, Subscription } from "~/lib/api/types"
+import { SubscriptionStatusBadge } from "./subscription-status"
 
 interface SubscriptionPlanProps {
   subscription: Subscription
   plans: Plan[]
   onChangePlan: (planPriceId: string) => void
+  isChangingPlan: boolean
 }
 
 export function SubscriptionPlan({
   subscription,
   plans,
   onChangePlan,
+  isChangingPlan,
 }: SubscriptionPlanProps) {
   const { t } = useTranslation()
-
-  const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency,
-    }).format(amount)
-  }
+  const formatAmount = (amount: number, currency: string) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(amount)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          {subscription.plan.name}
-          <Badge variant="outline" className="text-xs">
-            {subscription.price.interval === "month"
-              ? t("plans.monthly")
-              : t("plans.yearly")}
-          </Badge>
-        </CardTitle>
+    <Card className="gap-5">
+      <CardHeader className="gap-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle className="text-lg">{subscription.plan.name}</CardTitle>
+            <Badge variant="outline">
+              {subscription.price.interval === "month"
+                ? t("plans.monthly")
+                : t("plans.yearly")}
+            </Badge>
+          </div>
+          <SubscriptionStatusBadge subscription={subscription} />
+        </div>
         <CardDescription>
           {formatAmount(subscription.price.amount, subscription.price.currency)}
-          /{subscription.price.interval === "month"
-            ? t("plans.month")
-            : t("plans.year")}
+          /{subscription.price.interval === "month" ? t("plans.month") : t("plans.year")}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground">
+
+      <CardContent className="flex flex-col gap-6">
+        <div className="grid gap-4 rounded-md border p-4 text-sm sm:grid-cols-2">
           {subscription.current_period_end && (
-            <p>
-              {t("subscription.current-period")}:{" "}
-              {new Date(subscription.current_period_end).toLocaleDateString("pt-BR")}
-            </p>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">{t("subscription.current-period")}</span>
+              <span className="font-medium text-foreground">
+                {new Date(subscription.current_period_end).toLocaleDateString("pt-BR")}
+              </span>
+            </div>
           )}
           {subscription.trial_ends_at && (
-            <p>
-              {t("subscription.trial-ends")}:{" "}
-              {new Date(subscription.trial_ends_at).toLocaleDateString("pt-BR")}
-            </p>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">{t("subscription.trial-ends")}</span>
+              <span className="font-medium text-foreground">
+                {new Date(subscription.trial_ends_at).toLocaleDateString("pt-BR")}
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Other plans available for upgrade/downgrade */}
-        <div className="space-y-2 pt-2">
+        <div className="flex flex-col gap-3">
           <p className="text-sm font-medium">{t("subscription.switch-plan")}</p>
           {plans
-            .filter((p) => p.id !== subscription.plan.id)
+            .filter((plan) => plan.id !== subscription.plan.id)
             .map((plan) => {
               const price = plan.prices.find(
-                (p) => p.interval === subscription.price.interval,
+                (item) => item.interval === subscription.price.interval,
               ) ?? plan.prices[0]
               if (!price) return null
 
               const isUpgrade = price.amount > subscription.price.amount
+              const isCompatibleCurrency = price.currency === subscription.price.currency
 
               return (
                 <div
                   key={plan.id}
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                  className="grid gap-3 rounded-md border p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
                 >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{plan.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatAmount(price.amount, price.currency)}
-                        /{price.interval === "month"
-                          ? t("plans.month")
-                          : t("plans.year")}
-                        {isUpgrade && (
-                          <span className="ml-1 text-xs text-green-600 font-medium">
-                            ↑
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium">{plan.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatAmount(price.amount, price.currency)}
+                      /{price.interval === "month" ? t("plans.month") : t("plans.year")}
+                    </p>
                   </div>
                   <Button
                     size="sm"
                     variant={isUpgrade ? "default" : "outline"}
+                    disabled={isChangingPlan || !isCompatibleCurrency}
                     onClick={() => onChangePlan(price.id)}
                   >
-                    {isUpgrade
-                      ? t("subscription.upgrade")
-                      : t("subscription.downgrade")}
-                    <ArrowRightIcon className="ml-1 size-3" />
+                    {!isCompatibleCurrency
+                      ? t("subscription.currency-mismatch")
+                      : isChangingPlan
+                        ? "Atualizando..."
+                        : isUpgrade
+                        ? t("subscription.upgrade")
+                        : t("subscription.downgrade")}
+                    <ArrowRightIcon data-icon="inline-end" />
                   </Button>
                 </div>
               )
