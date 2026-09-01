@@ -15,6 +15,8 @@ export default [
     route("reports/timeline", "routes/reports.timeline.tsx"),
     route("reports/task-time", "routes/reports.task-time.tsx"),
     route("reports/user-time", "routes/reports.user-time.tsx"),
+    route("subscription", "routes/subscription.tsx"),
+    route("admin/plans", "routes/admin-plans.tsx"),
   ]),
   route("login", "routes/login.tsx"),
   route("signup", "routes/signup.tsx"),

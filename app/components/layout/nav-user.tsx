@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "~/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +15,15 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar"
 import { useNavigate } from "react-router"
+import { Link } from "react-router"
+import { useTranslation } from "react-i18next"
 import { useTheme } from "~/components/shared/theme-provider"
 import { useAuth } from "~/hooks/use-auth"
 import {
   EllipsisVerticalIcon,
   CircleUserRoundIcon,
+  CreditCardIcon,
+  LayersIcon,
   LogOutIcon,
   SunIcon,
   MoonIcon,
@@ -41,17 +41,20 @@ function getInitials(name: string): string {
 
 export function NavUser({
   user,
+  isAdmin,
 }: {
   user: {
     name: string
     email: string
     avatar?: string
   }
+  isAdmin: boolean
 }) {
   const { isMobile } = useSidebar()
   const { setTheme } = useTheme()
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <SidebarMenu>
@@ -63,8 +66,12 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
+                {user.avatar && (
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                )}
+                <AvatarFallback className="rounded-lg">
+                  {getInitials(user.name)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -84,8 +91,12 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                  <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
+                  {user.avatar && (
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                  )}
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -103,7 +114,8 @@ export function NavUser({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
-                  const isDark = document.documentElement.classList.contains("dark")
+                  const isDark =
+                    document.documentElement.classList.contains("dark")
                   setTheme(isDark ? "light" : "dark")
                 }}
               >
@@ -120,16 +132,35 @@ export function NavUser({
                 )}
               </DropdownMenuItem>
             </DropdownMenuGroup>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to="/subscription">
+                      <CreditCardIcon />
+                      {t("nav.subscription")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/plans">
+                      <LayersIcon />
+                      {t("nav.plans-manage")}
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
+            )}
             <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  logout()
-                  navigate("/login")
-                }}
-              >
-                <LogOutIcon />
-                Log out
-              </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                logout()
+                navigate("/login")
+              }}
+            >
+              <LogOutIcon />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -20,12 +20,13 @@ import {
 } from "react"
 import { AuthService } from "~/lib/api"
 import { getToken, setToken } from "~/lib/api/client"
-import type { User, RegisterRequest } from "~/lib/api/types"
+import type { User, Account, RegisterRequest } from "~/lib/api/types"
 
 /* ---------- Types ---------- */
 
 interface AuthState {
   user: User | null
+  account: Account | null
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
@@ -42,6 +43,7 @@ const AuthContext = createContext<AuthState | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [account, setAccount] = useState<Account | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // Tenta restaurar sessão ao montar o provider
@@ -53,7 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     AuthService.me()
-      .then(({ user }) => setUser(user))
+      .then(({ user, account }) => {
+        setUser(user)
+        setAccount(account)
+      })
       .catch(() => {
         // Token inválido/expirado → limpa
         setToken(null)
@@ -64,26 +69,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const res = await AuthService.login(email, password)
     setUser(res.user)
+    setAccount(res.account)
   }, [])
 
   const register = useCallback(async (data: RegisterRequest) => {
     const res = await AuthService.register(data)
     setUser(res.user)
+    setAccount(res.account)
   }, [])
 
   const logout = useCallback(() => {
     AuthService.logout()
     setUser(null)
+    setAccount(null)
   }, [])
 
   const refreshUser = useCallback(async () => {
     try {
-      const { user } = await AuthService.me()
+      const { user, account } = await AuthService.me()
       setUser(user)
+      setAccount(account)
     } catch {
       // Token inválido/expirado — logout silencioso
       AuthService.logout()
       setUser(null)
+      setAccount(null)
     }
   }, [])
 
@@ -91,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        account,
         isLoading,
         isAuthenticated: user !== null,
         login,
